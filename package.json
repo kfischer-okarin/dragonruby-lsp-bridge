@@ -1,0 +1,24 @@
+{
+  "name": "dragonruby-lsp-bridge",
+  "version": "1.0.0",
+  "description": "Forwards LSP requests to a local running DragonRuby instance",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-bridge.git"
+  },
+  "keywords": [
+    "LSP",
+    "ruby",
+    "dragonruby"
+  ],
+  "author": "Kevin Fischer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-bridge/issues"
+  },
+  "homepage": "https://github.com/kfischer-okarin/dragonruby-lsp-bridge"
+}
