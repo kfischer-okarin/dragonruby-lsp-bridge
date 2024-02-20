@@ -7,10 +7,14 @@ process.stdin.on('data', async (data) => {
   const message = extractNextJSONRPCMessage(collectedData);
   if (message) {
     sendMessageToServer(message.message, (response) => {
+      if (response.status === 204) {
+        return;
+      }
+
       process.stdout.write(
-        `Content-Length: ${response.length}\r\n` +
+        `Content-Length: ${response.body.length}\r\n` +
         '\r\n' +
-        response
+        response.body
       );
     });
     collectedData = message.remaining;
@@ -50,7 +54,10 @@ const sendMessageToServer = (message, processResponseCallback) => {
 
       response.on('end', () => {
         const body = Buffer.concat(bodyChunks).toString();
-        processResponseCallback(body);
+        processResponseCallback({
+          status: response.statusCode,
+          body,
+        });
       });
     }
   );

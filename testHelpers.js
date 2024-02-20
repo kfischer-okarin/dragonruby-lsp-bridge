@@ -51,3 +51,9 @@ exports.readStringSync = (stream) => new Promise((resolve) => {
     resolve(stream.read().toString());
   });
 });
+
+exports.buildValidMessage = () => (
+  'Content-Length: 19\r\n' +
+  '\r\n' +
+    '{"content":"hello"}'
+);
