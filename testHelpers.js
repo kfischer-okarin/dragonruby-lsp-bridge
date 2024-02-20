@@ -1,5 +1,6 @@
-const http = require('http');
 const { fork } = require('child_process');
+const http = require('http');
+
 
 exports.startStubServer = (port, responses) => {
   const server = http.createServer();

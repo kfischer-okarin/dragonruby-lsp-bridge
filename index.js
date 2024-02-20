@@ -4,7 +4,7 @@ let collectedData = '';
 
 process.stdin.on('data', async (data) => {
   collectedData += data;
-  const message = findNextJSONRPCMessage(collectedData);
+  const message = extractNextJSONRPCMessage(collectedData);
   if (message) {
     sendMessageToServer(message.message, (response) => {
       process.stdout.write(
@@ -17,14 +17,14 @@ process.stdin.on('data', async (data) => {
   }
 });
 
-const findNextJSONRPCMessage = (string) => {
-  const contentLengthMatch = string.match(/Content-Length: (\d+)/);
-  if (!contentLengthMatch) {
+const extractNextJSONRPCMessage = (string) => {
+  const headerMatch = string.match(/Content-Length: (\d+)\r\n\r\n/);
+  if (!headerMatch) {
     return null;
   }
 
-  const contentLength = parseInt(contentLengthMatch[1], 10);
-  const contentStart = string.indexOf('\r\n\r\n') + 4;
+  const contentLength = parseInt(headerMatch[1], 10);
+  const contentStart = headerMatch.index + headerMatch[0].length;
   const contentEnd = contentStart + contentLength;
 
   if (string.length < contentEnd) {
