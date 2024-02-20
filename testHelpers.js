@@ -36,7 +36,7 @@ exports.startStubServer = (port, responses) => {
   return server;
 }
 
-exports.startBridgeProcess = () => fork('./index.js', { stdio: 'pipe' });
+exports.startBridgeProcess = () => fork('./index.js', { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
 
 exports.waitForNextRequest = (server) => new Promise((resolve) => {
   server.once('request', (req) => {
