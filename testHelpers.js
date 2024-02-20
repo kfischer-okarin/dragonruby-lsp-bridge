@@ -23,9 +23,10 @@ exports.startStubServer = (port, responses) => {
         body,
       });
 
-      res.statusCode = 200;
+      const response = remainingResponses.shift();
+      res.statusCode = response.status;
       res.setHeader('Content-Type', 'application/json');
-      res.end(remainingResponses.shift());
+      res.end(response.body);
       if (remainingResponses.length === 0) {
         server.close();
       }

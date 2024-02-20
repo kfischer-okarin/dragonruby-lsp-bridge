@@ -1,10 +1,22 @@
 const assert = require('assert');
+const test = require('node:test');
 const { startStubServer, startBridgeProcess, waitForNextRequest, readStringSync } = require('./testHelpers.js');
 
 
-(async () => {
-  const server = startStubServer(9001, ['{"response": "ok"}']);
-  const bridgeProcess = startBridgeProcess();
+let bridgeProcess;
+
+
+test.afterEach(() => {
+  if (bridgeProcess) {
+    bridgeProcess.kill();
+  }
+});
+
+test('Forwards JSON RPC requests to server', async () => {
+  const server = startStubServer(9001, [
+    { status: 200, body: '{"response": "ok"}' },
+  ]);
+  bridgeProcess = startBridgeProcess();
   bridgeProcess.stdin.write('Content-Length: 19\r\n' +
                             '\r\n' +
                             '{"content":"hello"}');
@@ -21,6 +33,4 @@ const { startStubServer, startBridgeProcess, waitForNextRequest, readStringSync 
                      'Content-Length: 18\r\n' +
                      '\r\n' +
                      '{"response": "ok"}');
-
-  bridgeProcess.kill();
-})();
+});
