@@ -1,4 +1,5 @@
 const http = require('http');
+const { fork } = require('child_process');
 
 exports.startStubServer = (port, responses) => {
   const server = http.createServer();
@@ -34,3 +35,17 @@ exports.startStubServer = (port, responses) => {
 
   return server;
 }
+
+exports.startBridgeProcess = () => fork('./index.js', { stdio: 'pipe' });
+
+exports.waitForNextRequest = (server) => new Promise((resolve) => {
+  server.once('request', (req) => {
+    req.on('end', resolve);
+  });
+});
+
+exports.readStringSync = (stream) => new Promise((resolve) => {
+  stream.once('readable', () => {
+    resolve(stream.read().toString());
+  });
+});
