@@ -52,8 +52,22 @@ exports.readStringSync = (stream) => new Promise((resolve) => {
   });
 });
 
-exports.buildValidMessage = () => (
-  'Content-Length: 19\r\n' +
-  '\r\n' +
-    '{"content":"hello"}'
+exports.waitForMs = (ms) => new Promise((resolve) => {
+  setTimeout(resolve, ms);
+});
+
+exports.buildJSONRPCMessage = (content) => (
+  `Content-Length: ${content.length}\r\n` +
+    '\r\n' +
+    content
 );
+
+exports.buildValidMessage = () => exports.buildJSONRPCMessage('{"content":"hello"}');
+
+exports.buildValidServerResponses = (numResponses) => {
+  const responses = [];
+  for (let i = 0; i < numResponses; i++) {
+    responses.push({ status: 200, body: '{"response": "ok"}' });
+  }
+  return responses;
+}

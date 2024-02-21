@@ -1,10 +1,13 @@
 const assert = require('assert');
 const test = require('node:test');
 const {
+  buildJSONRPCMessage,
   buildValidMessage,
+  buildValidServerResponses,
   readStringSync,
   startStubServer,
   startBridgeProcess,
+  waitForMs,
   waitForNextRequest,
 } = require('./testHelpers.js');
 
@@ -34,7 +37,6 @@ test('Forwards JSON RPC requests to server', async () => {
   ]);
 
   const response = await readStringSync(bridgeProcess.stdout);
-
   assert.strictEqual(response,
                      'Content-Length: 18\r\n' +
                      '\r\n' +
@@ -54,9 +56,23 @@ test('Shows no output when server replies with 204', async () => {
   await waitForNextRequest(server);
 
   const response = await readStringSync(bridgeProcess.stdout);
-
   assert.strictEqual(response,
                      'Content-Length: 18\r\n' +
                      '\r\n' +
                      '{"response": "ok"}');
+});
+
+test('Bridge process ignores messages while no server is started', async () => {
+  bridgeProcess = startBridgeProcess();
+  bridgeProcess.stdin.write(buildJSONRPCMessage('{"messageNumber": 1}'));
+  // Make sure the stdin handler has time to process the message
+  await waitForMs(50);
+
+  const server = startStubServer(9001, buildValidServerResponses(1));
+  bridgeProcess.stdin.write(buildJSONRPCMessage('{"messageNumber": 2}'));
+
+  await waitForNextRequest(server);
+  assert.deepStrictEqual(server.receivedRequests, [
+    { method: 'POST', body: '{"messageNumber": 2}' },
+  ]);
 });
