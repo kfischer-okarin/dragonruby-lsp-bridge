@@ -40,14 +40,25 @@ exports.startStubServer = (port, responses) => {
 
 exports.startBridgeProcess = () => fork('./index.js', { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
 
-exports.waitForNextRequest = (server) => new Promise((resolve) => {
+exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
+  const timeout = setTimeout(() => {
+    reject(new Error('Timed out waiting for request'));
+  }, 1000);
+
   server.once('request', (req) => {
-    req.on('end', resolve);
+    req.on('end', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
   });
 });
 
-exports.readStringSync = (stream) => new Promise((resolve) => {
+exports.readStringSync = (stream) => new Promise((resolve, reject) => {
+  const timeout = setTimeout(() => {
+    reject(new Error('Timed out waiting for data'));
+  }, 1000);
   stream.once('readable', () => {
+    clearTimeout(timeout);
     resolve(stream.read().toString());
   });
 });
