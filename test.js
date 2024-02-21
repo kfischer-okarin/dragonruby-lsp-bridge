@@ -5,6 +5,7 @@ const {
   buildValidMessage,
   buildValidServerResponses,
   readStringSync,
+  sendToBridgeProcess,
   startStubServer,
   startBridgeProcess,
   waitForMs,
@@ -26,52 +27,38 @@ test('Forwards JSON RPC requests to server', async () => {
     { status: 200, body: '{"response": "ok"}' },
   ]);
   bridgeProcess = startBridgeProcess();
-  bridgeProcess.stdin.write('Content-Length: 19\r\n' +
-                            '\r\n' +
-                            '{"content":"hello"}');
+  const response = await sendToBridgeProcess(bridgeProcess,
+                                             'Content-Length: 19\r\n' +
+                                             '\r\n' +
+                                             '{"content":"hello"}');
 
-  await waitForNextRequest(server);
-
-  assert.deepStrictEqual(server.receivedRequests, [
-    { method: 'POST', body: '{"content":"hello"}' },
-  ]);
-
-  const response = await readStringSync(bridgeProcess.stdout);
   assert.strictEqual(response,
                      'Content-Length: 18\r\n' +
                      '\r\n' +
                      '{"response": "ok"}');
+
+  assert.deepStrictEqual(server.receivedRequests, [
+    { method: 'POST', body: '{"content":"hello"}' },
+  ]);
 });
 
 test('Shows no output when server replies with 204', async () => {
   const server = startStubServer(9001, [
     { status: 204, body: '' },
-    { status: 200, body: '{"response": "ok"}' },
   ]);
   bridgeProcess = startBridgeProcess();
 
-  bridgeProcess.stdin.write(buildValidMessage());
-  await waitForNextRequest(server);
-  bridgeProcess.stdin.write(buildValidMessage());
-  await waitForNextRequest(server);
-
-  const response = await readStringSync(bridgeProcess.stdout);
-  assert.strictEqual(response,
-                     'Content-Length: 18\r\n' +
-                     '\r\n' +
-                     '{"response": "ok"}');
+  const response = await sendToBridgeProcess(bridgeProcess, buildValidMessage());
+  assert.strictEqual(response, null);
 });
 
 test('Bridge process ignores messages while no server is started', async () => {
   bridgeProcess = startBridgeProcess();
-  bridgeProcess.stdin.write(buildJSONRPCMessage('{"messageNumber": 1}'));
-  // Make sure the stdin handler has time to process the message
-  await waitForMs(50);
+  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"messageNumber": 1}'));
 
   const server = startStubServer(9001, buildValidServerResponses(1));
-  bridgeProcess.stdin.write(buildJSONRPCMessage('{"messageNumber": 2}'));
+  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"messageNumber": 2}'));
 
-  await waitForNextRequest(server);
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', body: '{"messageNumber": 2}' },
   ]);
@@ -79,9 +66,7 @@ test('Bridge process ignores messages while no server is started', async () => {
 
 test('Bridge process keeps initialize message around for server starts', async () => {
   bridgeProcess = startBridgeProcess();
-  bridgeProcess.stdin.write(buildJSONRPCMessage('{"method": "initialize"}'));
-  // Make sure the stdin handler has time to process the message
-  await waitForMs(50);
+  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"method": "initialize"}'));
 
   let server = startStubServer(9001, [
     { status: 200, body: '{"result": {}}' },
@@ -97,8 +82,7 @@ test('Bridge process keeps initialize message around for server starts', async (
                      '\r\n' +
                      '{"result": {}}');
 
-  bridgeProcess.stdin.write(buildJSONRPCMessage('{"ignored": "message"}'));
-  await waitForMs(50);
+  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"ignored": "message"}'));
   server = startStubServer(9001, [
     { status: 200, body: '{"response": "ok"}' },
   ]);

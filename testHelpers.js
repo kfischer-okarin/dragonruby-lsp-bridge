@@ -40,6 +40,11 @@ exports.startStubServer = (port, responses) => {
 
 exports.startBridgeProcess = () => fork('./index.js', { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
 
+exports.sendToBridgeProcess = (bridgeProcess, message) => {
+  bridgeProcess.stdin.write(message);
+  return exports.readStringSync(bridgeProcess.stdout);
+};
+
 exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
   const timeout = setTimeout(() => {
     reject(new Error('Timed out waiting for request'));
@@ -53,14 +58,21 @@ exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
   });
 });
 
-exports.readStringSync = (stream) => new Promise((resolve, reject) => {
-  const timeout = setTimeout(() => {
-    reject(new Error('Timed out waiting for data'));
-  }, 1000);
-  stream.once('readable', () => {
-    clearTimeout(timeout);
+exports.readStringSync = (stream) => new Promise((resolve) => {
+  let readAndResolve;
+
+  const readTimeout = setTimeout(() => {
+    resolve(null);
+    // Already resolved, so we don't want to resolve again on unrelated later reads
+    stream.removeListener('readable', readAndResolve);
+  }, 50);
+
+  readAndResolve = () => {
+    clearTimeout(readTimeout);
     resolve(stream.read().toString());
-  });
+  };
+
+  stream.once('readable', readAndResolve);
 });
 
 exports.waitForMs = (ms) => new Promise((resolve) => {
