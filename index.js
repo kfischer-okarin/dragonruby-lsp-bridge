@@ -6,28 +6,7 @@ process.stdin.on('data', async (data) => {
   collectedData += data;
   const message = extractNextJSONRPCMessage(collectedData);
   if (message) {
-    sendMessageToServer(
-      message.message,
-      {
-        onResponse: (response) => {
-          if (response.status === 204) {
-            return;
-          }
-
-          process.stdout.write(
-            `Content-Length: ${response.body.length}\r\n` +
-              '\r\n' +
-              response.body
-          );
-        },
-        onError: (error) => {
-          if (error.code === 'ECONNREFUSED') {
-            return;
-          }
-          throw error;
-        },
-      }
-    );
+    postJSONRPCMessageToServer(message.message);
     collectedData = message.remaining;
   }
 });
@@ -52,7 +31,30 @@ const extractNextJSONRPCMessage = (string) => {
   };
 };
 
-const sendMessageToServer = (message, { onResponse, onError }) => {
+const postJSONRPCMessageToServer = (message) => postToServer(
+  message,
+  {
+    onResponse: (response) => {
+      if (response.status === 204) {
+        return;
+      }
+
+      process.stdout.write(
+        `Content-Length: ${response.body.length}\r\n` +
+          '\r\n' +
+          response.body
+      );
+    },
+    onError: (error) => {
+      if (error.code === 'ECONNREFUSED') {
+        return;
+      }
+      throw error;
+    },
+  },
+);
+
+const postToServer = (requestBody, { onResponse, onError }) => {
   const request = http.request(
     'http://localhost:9001',
     { method: 'POST' },
@@ -75,6 +77,6 @@ const sendMessageToServer = (message, { onResponse, onError }) => {
 
   request.on('error', onError);
   request.setHeader('Content-Type', 'application/json');
-  request.write(message);
+  request.write(requestBody);
   request.end();
 }
