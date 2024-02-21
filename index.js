@@ -1,12 +1,31 @@
 const http = require('http');
 
+let initializeMessage = null;
+let tryInitializeMessageInterval = null;
+
 let collectedData = '';
 
 process.stdin.on('data', async (data) => {
   collectedData += data;
   const message = extractNextJSONRPCMessage(collectedData);
   if (message) {
-    postJSONRPCMessageToServer(message.message);
+    if (!initializeMessage && isInitializeMessage(message.message)) {
+      initializeMessage = message.message;
+    }
+
+    postJSONRPCMessageToServer(
+      message.message,
+      {
+        onConnectionRefused: () => {
+          if (initializeMessage && !tryInitializeMessageInterval) {
+            tryInitializeMessageInterval = setInterval(
+              tryToSendInitializeMessage,
+              500,
+            );
+          }
+        },
+      },
+    );
     collectedData = message.remaining;
   }
 });
@@ -31,7 +50,29 @@ const extractNextJSONRPCMessage = (string) => {
   };
 };
 
-const postJSONRPCMessageToServer = (message) => postToServer(
+const isInitializeMessage = (message) => {
+  const parsedMessage = JSON.parse(message);
+  return parsedMessage.method === 'initialize';
+};
+
+const tryToSendInitializeMessage = () => {
+  let success = true;
+  postJSONRPCMessageToServer(
+    initializeMessage,
+    {
+      onConnectionRefused: () => {
+        success = false;
+      },
+    },
+  );
+
+  if (success) {
+    clearInterval(tryInitializeMessageInterval);
+    tryInitializeMessageInterval = null;
+  }
+};
+
+const postJSONRPCMessageToServer = (message, { onConnectionRefused }) => postToServer(
   message,
   {
     onResponse: (response) => {
@@ -46,7 +87,8 @@ const postJSONRPCMessageToServer = (message) => postToServer(
       );
     },
     onError: (error) => {
-      if (error.code === 'ECONNREFUSED') {
+      if (error.code === 'ECONNREFUSED' && onConnectionRefused) {
+        onConnectionRefused();
         return;
       }
       throw error;

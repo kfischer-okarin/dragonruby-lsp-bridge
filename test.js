@@ -76,3 +76,35 @@ test('Bridge process ignores messages while no server is started', async () => {
     { method: 'POST', body: '{"messageNumber": 2}' },
   ]);
 });
+
+test('Bridge process keeps initialize message around for server starts', async () => {
+  bridgeProcess = startBridgeProcess();
+  bridgeProcess.stdin.write(buildJSONRPCMessage('{"method": "initialize"}'));
+  // Make sure the stdin handler has time to process the message
+  await waitForMs(50);
+
+  let server = startStubServer(9001, [
+    { status: 200, body: '{"result": {}}' },
+  ]);
+
+  await waitForNextRequest(server);
+  assert.deepStrictEqual(server.receivedRequests, [
+    { method: 'POST', body: '{"method": "initialize"}' },
+  ]);
+  const response = await readStringSync(bridgeProcess.stdout);
+  assert.strictEqual(response,
+                     'Content-Length: 14\r\n' +
+                     '\r\n' +
+                     '{"result": {}}');
+
+  bridgeProcess.stdin.write(buildJSONRPCMessage('{"ignored": "message"}'));
+  await waitForMs(50);
+  server = startStubServer(9001, [
+    { status: 200, body: '{"response": "ok"}' },
+  ]);
+  await waitForNextRequest(server);
+
+  assert.deepStrictEqual(server.receivedRequests, [
+    { method: 'POST', body: '{"method": "initialize"}' },
+  ]);
+});
