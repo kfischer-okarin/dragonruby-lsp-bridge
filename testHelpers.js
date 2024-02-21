@@ -42,7 +42,7 @@ exports.startBridgeProcess = () => fork('./index.js', { stdio: ['pipe', 'pipe', 
 
 exports.sendToBridgeProcess = (bridgeProcess, message) => {
   bridgeProcess.stdin.write(message);
-  return exports.readStringSync(bridgeProcess.stdout);
+  return exports.tryToReadFromStream(bridgeProcess.stdout);
 };
 
 exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
@@ -58,7 +58,7 @@ exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
   });
 });
 
-exports.readStringSync = (stream) => new Promise((resolve) => {
+exports.tryToReadFromStream = (stream) => new Promise((resolve) => {
   let readAndResolve;
 
   const readTimeout = setTimeout(() => {

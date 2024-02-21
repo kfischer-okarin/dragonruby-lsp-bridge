@@ -4,11 +4,10 @@ const {
   buildJSONRPCMessage,
   buildValidMessage,
   buildValidServerResponses,
-  readStringSync,
   sendToBridgeProcess,
   startStubServer,
   startBridgeProcess,
-  waitForMs,
+  tryToReadFromStream,
   waitForNextRequest,
 } = require('./testHelpers.js');
 
@@ -76,7 +75,7 @@ test('Bridge process keeps initialize message around for server starts', async (
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', body: '{"method": "initialize"}' },
   ]);
-  const response = await readStringSync(bridgeProcess.stdout);
+  let response = await tryToReadFromStream(bridgeProcess.stdout);
   assert.strictEqual(response,
                      'Content-Length: 14\r\n' +
                      '\r\n' +
