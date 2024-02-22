@@ -1,7 +1,6 @@
 const { fork } = require('child_process');
 const http = require('http');
 
-
 exports.startStubServer = (port, responses) => {
   const server = http.createServer();
 
@@ -37,6 +36,20 @@ exports.startStubServer = (port, responses) => {
 
   return server;
 }
+
+exports.isPortUsed = (port) => new Promise((resolve) => {
+  const request = http.request(
+    `http://localhost:${port}`,
+    { method: 'GET' },
+    (response) => {
+      resolve(true);
+    }
+  );
+  request.on('error', () => {
+    resolve(false);
+  });
+  request.end();
+});
 
 exports.startBridgeProcess = () => fork('./index.js', { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
 

@@ -4,6 +4,7 @@ const {
   buildJSONRPCMessage,
   buildValidMessage,
   buildValidServerResponses,
+  isPortUsed,
   sendToBridgeProcess,
   startStubServer,
   startBridgeProcess,
@@ -14,6 +15,12 @@ const {
 
 let bridgeProcess;
 
+test.before(async () => {
+  const portIsUsed = await isPortUsed(9001);
+  if (portIsUsed) {
+    throw new Error('Port 9001 is already in use');
+  }
+});
 
 test.afterEach(() => {
   if (bridgeProcess) {
