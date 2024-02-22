@@ -90,4 +90,7 @@ test('Bridge process keeps initialize message around for server starts', async (
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', body: '{"method": "initialize"}' },
   ]);
+  response = await tryToReadFromStream(bridgeProcess.stdout);
+  // Don't deliver initialized response again
+  assert.strictEqual(response, null);
 });
