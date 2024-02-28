@@ -44,7 +44,7 @@ test('Forwards JSON RPC requests to server', async () => {
                      '{"response": "ok"}');
 
   assert.deepStrictEqual(server.receivedRequests, [
-    { method: 'POST', url: '/', body: '{"content":"hello"}' },
+    { method: 'POST', url: '/dragon/lsp', body: '{"content":"hello"}' },
   ]);
 });
 
@@ -66,7 +66,7 @@ test('Bridge process ignores messages while no server is started', async () => {
   await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"messageNumber": 2}'));
 
   assert.deepStrictEqual(server.receivedRequests, [
-    { method: 'POST', url: '/', body: '{"messageNumber": 2}' },
+    { method: 'POST', url: '/dragon/lsp', body: '{"messageNumber": 2}' },
   ]);
 });
 
@@ -80,7 +80,7 @@ test('Bridge process keeps initialize message around for server starts', async (
 
   await waitForNextRequest(server);
   assert.deepStrictEqual(server.receivedRequests, [
-    { method: 'POST', url: '/', body: '{"method": "initialize"}' },
+    { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
   ]);
   let response = await tryToReadFromStream(bridgeProcess.stdout);
   assert.strictEqual(response,
@@ -95,7 +95,7 @@ test('Bridge process keeps initialize message around for server starts', async (
   await waitForNextRequest(server);
 
   assert.deepStrictEqual(server.receivedRequests, [
-    { method: 'POST', url: '/', body: '{"method": "initialize"}' },
+    { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
   ]);
   response = await tryToReadFromStream(bridgeProcess.stdout);
   // Don't deliver initialized response again

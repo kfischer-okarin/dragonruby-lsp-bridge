@@ -92,7 +92,7 @@ const postJSONRPCMessageToServer = (message, { onConnectionRefused }) => postToS
 
 const postToServer = (requestBody, { onResponse, onError }) => {
   const request = http.request(
-    'http://localhost:9001',
+    'http://localhost:9001/dragon/lsp',
     { method: 'POST' },
     (response) => {
       const bodyChunks = [];
