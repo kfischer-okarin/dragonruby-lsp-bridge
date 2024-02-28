@@ -18,6 +18,7 @@ exports.startStubServer = (port, responses) => {
     req.on('end', () => {
       const body = Buffer.concat(bodyChunks).toString();
       server.receivedRequests.push({
+        url: req.url,
         method: req.method,
         body,
       });
