@@ -10,7 +10,7 @@ class JsonRpcForwarder {
     this.tryInitializeMessageInterval = null;
   }
 
-  processIncomingData(data) {
+  async processIncomingData(data) {
     this.collectedData += data;
     const message = extractNextJSONRPCMessage(this.collectedData);
     if (message) {
@@ -18,7 +18,7 @@ class JsonRpcForwarder {
         this.startNewEditorSession(message.message);
       }
 
-      this.postJSONRPCMessageToServer(
+      await this.postJSONRPCMessageToServer(
         message.message,
         {
           onConnectionRefused: () => {
@@ -37,8 +37,8 @@ class JsonRpcForwarder {
     this.returnedInitializeResponse = false;
   }
 
-  postJSONRPCMessageToServer(message, { onConnectionRefused }) {
-    postToURL(
+  async postJSONRPCMessageToServer(message, { onConnectionRefused }) {
+    await postToURL(
       'http://localhost:9001/dragon/lsp',
       message,
       {
@@ -117,7 +117,7 @@ const isInitializeMessage = (message) => {
   return parsedMessage.method === 'initialize';
 };
 
-const postToURL = (url, requestBody, { onResponse, onError }) => {
+const postToURL = (url, requestBody, { onResponse, onError }) => new Promise((resolve) => {
   const request = http.request(
     url,
     { method: 'POST' },
@@ -134,19 +134,23 @@ const postToURL = (url, requestBody, { onResponse, onError }) => {
           status: response.statusCode,
           body,
         });
+        resolve();
       });
     }
   );
 
-  request.on('error', onError);
+  request.on('error', (error) => {
+    onError(error);
+    resolve();
+  });
   request.setHeader('Content-Type', 'application/json');
   request.write(requestBody);
   request.end();
-};
+});
 
-const tryToSendInitializeMessage = (forwarder) => {
+const tryToSendInitializeMessage = async (forwarder) => {
   let success = true;
-  forwarder.postJSONRPCMessageToServer(
+  await forwarder.postJSONRPCMessageToServer(
     forwarder.storedInitializeMessage,
     {
       onConnectionRefused: () => {
