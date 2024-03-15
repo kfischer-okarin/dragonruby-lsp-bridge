@@ -39,14 +39,7 @@ class JsonRpcForwarder {
 
   async postJSONRPCMessageToServer(message, { onConnectionRefused }) {
     try {
-      const response = await postToURL(
-        'http://localhost:9001/dragon/lsp',
-        message,
-        {
-          onResponse: (response) => {},
-          onError: (error) => {},
-        },
-      );
+      const response = await postToURL('http://localhost:9001/dragon/lsp', message);
 
       if (response.status === 204) {
         return;
@@ -119,7 +112,7 @@ const isInitializeMessage = (message) => {
   return parsedMessage.method === 'initialize';
 };
 
-const postToURL = (url, requestBody, { onResponse, onError }) => new Promise((resolve, reject) => {
+const postToURL = (url, requestBody) => new Promise((resolve, reject) => {
   const request = http.request(
     url,
     { method: 'POST' },
@@ -132,10 +125,6 @@ const postToURL = (url, requestBody, { onResponse, onError }) => new Promise((re
 
       response.on('end', () => {
         const body = Buffer.concat(bodyChunks).toString();
-        onResponse({
-          status: response.statusCode,
-          body,
-        });
         resolve({
           status: response.statusCode,
           body,
@@ -144,10 +133,7 @@ const postToURL = (url, requestBody, { onResponse, onError }) => new Promise((re
     }
   );
 
-  request.on('error', (error) => {
-    onError(error);
-    reject(error);
-  });
+  request.on('error', reject);
   request.setHeader('Content-Type', 'application/json');
   request.write(requestBody);
   request.end();
