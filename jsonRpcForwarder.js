@@ -5,15 +5,20 @@ exports.buildJsonRpcForwarder = () => new JsonRpcForwarder();
 class JsonRpcForwarder {
   constructor() {
     this.storedInitializeMessage = null;
+    this.initializationState = {
+      type: 'waitingForInitialize',
+    };
     this.returnedInitializeResponse = false;
-    this.collectedData = '';
     this.tryInitializeMessageInterval = null;
+    this.messageStreamReader = new JSONRPCMessageStreamReader();
   }
 
   async processIncomingData(data) {
-    this.collectedData += data;
-    const message = extractNextJSONRPCMessage(this.collectedData);
-    if (message) {
+    this.messageStreamReader.processIncomingData(data);
+
+    while (this.messageStreamReader.hasReadyMessages) {
+      const message = this.messageStreamReader.takeNextReadyMessage();
+
       this.processMessage(message);
 
       await this.postJSONRPCMessageToServer(
@@ -26,7 +31,6 @@ class JsonRpcForwarder {
           },
         },
       );
-      this.collectedData = message.remaining;
     }
   }
 
@@ -86,28 +90,57 @@ class JsonRpcForwarder {
 
 // --- private functions ---
 
-const extractNextJSONRPCMessage = (string) => {
-  const headerMatch = string.match(/Content-Length: (\d+)\r\n\r\n/);
-  if (!headerMatch) {
-    return null;
+class JSONRPCMessageStreamReader {
+  #collectedData;
+  #readyMessages;
+
+  constructor() {
+    this.#collectedData = '';
+    this.#readyMessages = [];
   }
 
-  const contentLength = parseInt(headerMatch[1], 10);
-  const contentStart = headerMatch.index + headerMatch[0].length;
-  const contentEnd = contentStart + contentLength;
-
-  if (string.length < contentEnd) {
-    return null;
+  get hasReadyMessages() {
+    return this.#readyMessages.length > 0;
   }
 
-  const rawMessage = string.slice(contentStart, contentEnd);
+  takeNextReadyMessage() {
+    return this.#readyMessages.shift();
+  }
 
-  return {
-    raw: rawMessage,
-    parsed: JSON.parse(rawMessage),
-    remaining: string.slice(contentEnd),
+  processIncomingData(data) {
+    this.#collectedData += data;
+
+    let message = this.#tryToReadJSONRPCMessage();
+    while (message) {
+      this.#readyMessages.push(message);
+      message = this.#tryToReadJSONRPCMessage();
+    }
+  }
+
+  #tryToReadJSONRPCMessage() {
+    const headerMatch = this.#collectedData.match(/Content-Length: (\d+)\r\n\r\n/);
+    if (!headerMatch) {
+      return null;
+    }
+
+    const contentLength = parseInt(headerMatch[1], 10);
+    const contentStart = headerMatch.index + headerMatch[0].length;
+    const contentEnd = contentStart + contentLength;
+
+    if (this.#collectedData.length < contentEnd) {
+      return null;
+    }
+
+    const rawMessage = this.#collectedData.slice(contentStart, contentEnd);
+
+    this.#collectedData = this.#collectedData.slice(contentEnd);
+
+    return {
+      raw: rawMessage,
+      parsed: JSON.parse(rawMessage),
+    };
   };
-};
+}
 
 const isInitializeMessage = (message) => message && message.parsed && message.parsed.method === 'initialize';
 
