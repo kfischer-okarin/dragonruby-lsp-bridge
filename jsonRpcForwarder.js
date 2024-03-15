@@ -3,17 +3,85 @@ const http = require('http');
 exports.buildJsonRpcForwarder = () => new JsonRpcForwarder();
 
 class JsonRpcForwarder {
+  #messageStreamReader;
+
   constructor() {
-    this.messageStreamReader = new JSONRPCMessageStreamReader();
-    this.waitForEditor();
+    this.#messageStreamReader = new JSONRPCMessageStreamReader();
+    this.#waitForEditor();
   }
 
-  waitForEditor() {
-    this.state = { waitingForEditor: true };
+  async processIncomingData(data) {
+    this.#messageStreamReader.processIncomingData(data);
+
+    while (this.#messageStreamReader.hasReadyMessages) {
+      const message = this.#messageStreamReader.takeNextReadyMessage();
+
+      this.#processMessage(message);
+
+      await this.#postJSONRPCMessageToServer(
+        message,
+        {
+          onConnectionRefused: () => {
+            if (this.#state.connectedToServer) {
+              this.#startReconnectingToServer();
+            }
+          },
+        },
+      );
+    }
   }
 
-  startConnectingToServer(initializeMessage) {
-    this.state = {
+  postInitializeMessageToServer() {
+    this.#postJSONRPCMessageToServer(
+      this.#state.initializeMessage,
+      { onConnectionRefused: () => {} },
+    );
+  }
+
+  #processMessage(message) {
+    if (this.#state.waitingForEditor && isInitializeMessage(message)) {
+      this.#startConnectingToServer(message);
+    }
+  }
+
+  async #postJSONRPCMessageToServer(message, { onConnectionRefused }) {
+    try {
+      const response = await postToURL('http://localhost:9001/dragon/lsp', message.raw);
+
+      if (response.status === 204) {
+        return;
+      }
+
+      const shouldReturnResponse = this.#state.connectingToServer || this.#state.connectedToServer;
+      if (shouldReturnResponse) {
+        process.stdout.write(
+          `Content-Length: ${response.body.length}\r\n` +
+            '\r\n' +
+            response.body
+        );
+      }
+
+      if (this.#state.connectingToServer) {
+        this.#startForwardingMessages();
+      }
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' && onConnectionRefused) {
+        onConnectionRefused();
+        return;
+      }
+      throw error;
+    }
+  }
+
+  // --- state management ---
+  #state;
+
+  #waitForEditor() {
+    this.#state = { waitingForEditor: true };
+  }
+
+  #startConnectingToServer(initializeMessage) {
+    this.#state = {
       connectingToServer: true,
       initializeMessage,
       connectInterval: setInterval(
@@ -24,83 +92,27 @@ class JsonRpcForwarder {
     };
   }
 
-  startForwardingMessages() {
-    if (this.state.connectInterval) {
-      clearInterval(this.state.connectInterval);
+  #startForwardingMessages() {
+    if (this.#state.connectInterval) {
+      clearInterval(this.#state.connectInterval);
     }
 
-    this.state = {
+    this.#state = {
       connectedToServer: true,
-      initializeMessage: this.state.initializeMessage
+      initializeMessage: this.#state.initializeMessage
     };
   }
 
-  startReconnectingToServer() {
-    this.state = {
+  #startReconnectingToServer() {
+    this.#state = {
       reconnectingToServer: true,
-      initializeMessage: this.state.initializeMessage,
+      initializeMessage: this.#state.initializeMessage,
       connectInterval: setInterval(
         tryToSendInitializeMessage,
         500,
         this,
       ),
     };
-  }
-
-  async processIncomingData(data) {
-    this.messageStreamReader.processIncomingData(data);
-
-    while (this.messageStreamReader.hasReadyMessages) {
-      const message = this.messageStreamReader.takeNextReadyMessage();
-
-      this.processMessage(message);
-
-      await this.postJSONRPCMessageToServer(
-        message,
-        {
-          onConnectionRefused: () => {
-            if (this.state.connectedToServer) {
-              this.startReconnectingToServer();
-            }
-          },
-        },
-      );
-    }
-  }
-
-  processMessage(message) {
-    if (this.state.waitingForEditor && isInitializeMessage(message)) {
-      this.startConnectingToServer(message);
-    }
-  }
-
-  async postJSONRPCMessageToServer(message, { onConnectionRefused }) {
-    try {
-      const response = await postToURL('http://localhost:9001/dragon/lsp', message.raw);
-
-      if (response.status === 204) {
-        return;
-      }
-
-      const shouldReturnResponse = this.state.connectingToServer || this.state.connectedToServer;
-      if (shouldReturnResponse) {
-        process.stdout.write(
-          `Content-Length: ${response.body.length}\r\n` +
-            '\r\n' +
-            response.body
-        );
-      }
-
-      if (this.state.connectingToServer) {
-        this.startForwardingMessages();
-      }
-    } catch (error) {
-      if (error.code === 'ECONNREFUSED' && onConnectionRefused) {
-        onConnectionRefused();
-        return;
-      }
-      throw error;
-    }
   }
 }
 
@@ -188,8 +200,5 @@ const postToURL = (url, requestBody) => new Promise((resolve, reject) => {
 });
 
 const tryToSendInitializeMessage = async (forwarder) => {
-  await forwarder.postJSONRPCMessageToServer(
-    forwarder.state.initializeMessage,
-    { onConnectionRefused: () => {} },
-  );
+  forwarder.postInitializeMessageToServer();
 };
