@@ -14,12 +14,13 @@ class JsonRpcForwarder {
     this.collectedData += data;
     const message = extractNextJSONRPCMessage(this.collectedData);
     if (message) {
-      if (isInitializeMessage(message.raw)) {
-        this.startNewEditorSession(message.raw);
+      if (isInitializeMessage(message)) {
+        this.storedInitializeMessage = message;
+        this.returnedInitializeResponse = false;
       }
 
       await this.postJSONRPCMessageToServer(
-        message.raw,
+        message,
         {
           onConnectionRefused: () => {
             if (this.storedInitializeMessage && !this.tryingToConnectToServer) {
@@ -32,21 +33,15 @@ class JsonRpcForwarder {
     }
   }
 
-  startNewEditorSession(initializeMessage) {
-    this.storedInitializeMessage = initializeMessage;
-    this.returnedInitializeResponse = false;
-  }
-
   async postJSONRPCMessageToServer(message, { onConnectionRefused }) {
     try {
-      const response = await postToURL('http://localhost:9001/dragon/lsp', message);
+      const response = await postToURL('http://localhost:9001/dragon/lsp', message.raw);
 
       if (response.status === 204) {
         return;
       }
 
-      const wasInitializeMessage = isInitializeMessage(message);
-      const shouldReturnResponse = !wasInitializeMessage || !this.returnedInitializeResponse;
+      const shouldReturnResponse = !isInitializeMessage(message) || !this.returnedInitializeResponse;
       if (shouldReturnResponse) {
         process.stdout.write(
           `Content-Length: ${response.body.length}\r\n` +
@@ -54,7 +49,7 @@ class JsonRpcForwarder {
             response.body
         );
 
-        if (wasInitializeMessage) {
+        if (isInitializeMessage(message)) {
           this.returnedInitializeResponse = true;
         }
       }
@@ -105,14 +100,12 @@ const extractNextJSONRPCMessage = (string) => {
 
   return {
     raw: rawMessage,
+    parsed: JSON.parse(rawMessage),
     remaining: string.slice(contentEnd),
   };
 };
 
-const isInitializeMessage = (message) => {
-  const parsedMessage = JSON.parse(message);
-  return parsedMessage.method === 'initialize';
-};
+const isInitializeMessage = (message) => message && message.parsed && message.parsed.method === 'initialize';
 
 const postToURL = (url, requestBody) => new Promise((resolve, reject) => {
   const request = http.request(
