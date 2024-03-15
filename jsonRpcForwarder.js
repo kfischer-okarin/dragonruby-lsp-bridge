@@ -38,7 +38,8 @@ class JsonRpcForwarder {
   }
 
   postJSONRPCMessageToServer(message, { onConnectionRefused }) {
-    this.postToServer(
+    postToURL(
+      'http://localhost:9001/dragon/lsp',
       message,
       {
         onResponse: (response) => {
@@ -69,33 +70,6 @@ class JsonRpcForwarder {
         },
       },
     );
-  }
-
-  postToServer(requestBody, { onResponse, onError }) {
-    const request = http.request(
-      'http://localhost:9001/dragon/lsp',
-      { method: 'POST' },
-      (response) => {
-        const bodyChunks = [];
-
-        response.on('data', (chunk) => {
-          bodyChunks.push(chunk);
-        });
-
-        response.on('end', () => {
-          const body = Buffer.concat(bodyChunks).toString();
-          onResponse({
-            status: response.statusCode,
-            body,
-          });
-        });
-      }
-    );
-
-    request.on('error', onError);
-    request.setHeader('Content-Type', 'application/json');
-    request.write(requestBody);
-    request.end();
   }
 
   get tryingToConnectToServer() {
@@ -141,6 +115,33 @@ const extractNextJSONRPCMessage = (string) => {
 const isInitializeMessage = (message) => {
   const parsedMessage = JSON.parse(message);
   return parsedMessage.method === 'initialize';
+};
+
+const postToURL = (url, requestBody, { onResponse, onError }) => {
+  const request = http.request(
+    url,
+    { method: 'POST' },
+    (response) => {
+      const bodyChunks = [];
+
+      response.on('data', (chunk) => {
+        bodyChunks.push(chunk);
+      });
+
+      response.on('end', () => {
+        const body = Buffer.concat(bodyChunks).toString();
+        onResponse({
+          status: response.statusCode,
+          body,
+        });
+      });
+    }
+  );
+
+  request.on('error', onError);
+  request.setHeader('Content-Type', 'application/json');
+  request.write(requestBody);
+  request.end();
 };
 
 const tryToSendInitializeMessage = (forwarder) => {
