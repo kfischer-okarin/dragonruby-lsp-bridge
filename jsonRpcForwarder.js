@@ -38,38 +38,40 @@ class JsonRpcForwarder {
   }
 
   async postJSONRPCMessageToServer(message, { onConnectionRefused }) {
-    await postToURL(
-      'http://localhost:9001/dragon/lsp',
-      message,
-      {
-        onResponse: (response) => {
-          if (response.status === 204) {
-            return;
-          }
-
-          const wasInitializeMessage = isInitializeMessage(message);
-          const shouldReturnResponse = !wasInitializeMessage || !this.returnedInitializeResponse;
-          if (shouldReturnResponse) {
-            process.stdout.write(
-              `Content-Length: ${response.body.length}\r\n` +
-                '\r\n' +
-                response.body
-            );
-
-            if (wasInitializeMessage) {
-              this.returnedInitializeResponse = true;
-            }
-          }
+    try {
+      const response = await postToURL(
+        'http://localhost:9001/dragon/lsp',
+        message,
+        {
+          onResponse: (response) => {},
+          onError: (error) => {},
         },
-        onError: (error) => {
-          if (error.code === 'ECONNREFUSED' && onConnectionRefused) {
-            onConnectionRefused();
-            return;
-          }
-          throw error;
-        },
-      },
-    );
+      );
+
+      if (response.status === 204) {
+        return;
+      }
+
+      const wasInitializeMessage = isInitializeMessage(message);
+      const shouldReturnResponse = !wasInitializeMessage || !this.returnedInitializeResponse;
+      if (shouldReturnResponse) {
+        process.stdout.write(
+          `Content-Length: ${response.body.length}\r\n` +
+            '\r\n' +
+            response.body
+        );
+
+        if (wasInitializeMessage) {
+          this.returnedInitializeResponse = true;
+        }
+      }
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' && onConnectionRefused) {
+        onConnectionRefused();
+        return;
+      }
+      throw error;
+    }
   }
 
   get tryingToConnectToServer() {
@@ -117,7 +119,7 @@ const isInitializeMessage = (message) => {
   return parsedMessage.method === 'initialize';
 };
 
-const postToURL = (url, requestBody, { onResponse, onError }) => new Promise((resolve) => {
+const postToURL = (url, requestBody, { onResponse, onError }) => new Promise((resolve, reject) => {
   const request = http.request(
     url,
     { method: 'POST' },
@@ -134,14 +136,17 @@ const postToURL = (url, requestBody, { onResponse, onError }) => new Promise((re
           status: response.statusCode,
           body,
         });
-        resolve();
+        resolve({
+          status: response.statusCode,
+          body,
+        });
       });
     }
   );
 
   request.on('error', (error) => {
     onError(error);
-    resolve();
+    reject(error);
   });
   request.setHeader('Content-Type', 'application/json');
   request.write(requestBody);
