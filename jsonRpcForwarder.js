@@ -14,12 +14,12 @@ class JsonRpcForwarder {
     this.collectedData += data;
     const message = extractNextJSONRPCMessage(this.collectedData);
     if (message) {
-      if (isInitializeMessage(message.message)) {
-        this.startNewEditorSession(message.message);
+      if (isInitializeMessage(message.raw)) {
+        this.startNewEditorSession(message.raw);
       }
 
       await this.postJSONRPCMessageToServer(
-        message.message,
+        message.raw,
         {
           onConnectionRefused: () => {
             if (this.storedInitializeMessage && !this.tryingToConnectToServer) {
@@ -101,8 +101,10 @@ const extractNextJSONRPCMessage = (string) => {
     return null;
   }
 
+  const rawMessage = string.slice(contentStart, contentEnd);
+
   return {
-    message: string.slice(contentStart, contentEnd),
+    raw: rawMessage,
     remaining: string.slice(contentEnd),
   };
 };
