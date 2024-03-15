@@ -14,10 +14,7 @@ class JsonRpcForwarder {
     this.collectedData += data;
     const message = extractNextJSONRPCMessage(this.collectedData);
     if (message) {
-      if (isInitializeMessage(message)) {
-        this.storedInitializeMessage = message;
-        this.returnedInitializeResponse = false;
-      }
+      this.processMessage(message);
 
       await this.postJSONRPCMessageToServer(
         message,
@@ -30,6 +27,13 @@ class JsonRpcForwarder {
         },
       );
       this.collectedData = message.remaining;
+    }
+  }
+
+  processMessage(message) {
+    if (isInitializeMessage(message)) {
+      this.storedInitializeMessage = message;
+      this.returnedInitializeResponse = false;
     }
   }
 
