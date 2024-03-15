@@ -4,13 +4,47 @@ exports.buildJsonRpcForwarder = () => new JsonRpcForwarder();
 
 class JsonRpcForwarder {
   constructor() {
-    this.storedInitializeMessage = null;
-    this.initializationState = {
-      type: 'waitingForInitialize',
-    };
-    this.returnedInitializeResponse = false;
-    this.tryInitializeMessageInterval = null;
     this.messageStreamReader = new JSONRPCMessageStreamReader();
+    this.waitForEditor();
+  }
+
+  waitForEditor() {
+    this.state = { waitingForEditor: true };
+  }
+
+  startConnectingToServer(initializeMessage) {
+    this.state = {
+      connectingToServer: true,
+      initializeMessage,
+      connectInterval: setInterval(
+        tryToSendInitializeMessage,
+        500,
+        this,
+      ),
+    };
+  }
+
+  startForwardingMessages() {
+    if (this.state.connectInterval) {
+      clearInterval(this.state.connectInterval);
+    }
+
+    this.state = {
+      connectedToServer: true,
+      initializeMessage: this.state.initializeMessage
+    };
+  }
+
+  startReconnectingToServer() {
+    this.state = {
+      reconnectingToServer: true,
+      initializeMessage: this.state.initializeMessage,
+      connectInterval: setInterval(
+        tryToSendInitializeMessage,
+        500,
+        this,
+      ),
+    };
   }
 
   async processIncomingData(data) {
@@ -25,8 +59,8 @@ class JsonRpcForwarder {
         message,
         {
           onConnectionRefused: () => {
-            if (this.storedInitializeMessage && !this.tryingToConnectToServer) {
-              this.tryToConnectToServer();
+            if (this.state.connectedToServer) {
+              this.startReconnectingToServer();
             }
           },
         },
@@ -35,9 +69,8 @@ class JsonRpcForwarder {
   }
 
   processMessage(message) {
-    if (isInitializeMessage(message)) {
-      this.storedInitializeMessage = message;
-      this.returnedInitializeResponse = false;
+    if (this.state.waitingForEditor && isInitializeMessage(message)) {
+      this.startConnectingToServer(message);
     }
   }
 
@@ -49,17 +82,17 @@ class JsonRpcForwarder {
         return;
       }
 
-      const shouldReturnResponse = !isInitializeMessage(message) || !this.returnedInitializeResponse;
+      const shouldReturnResponse = this.state.connectingToServer || this.state.connectedToServer;
       if (shouldReturnResponse) {
         process.stdout.write(
           `Content-Length: ${response.body.length}\r\n` +
             '\r\n' +
             response.body
         );
+      }
 
-        if (isInitializeMessage(message)) {
-          this.returnedInitializeResponse = true;
-        }
+      if (this.state.connectingToServer) {
+        this.startForwardingMessages();
       }
     } catch (error) {
       if (error.code === 'ECONNREFUSED' && onConnectionRefused) {
@@ -68,23 +101,6 @@ class JsonRpcForwarder {
       }
       throw error;
     }
-  }
-
-  get tryingToConnectToServer() {
-    return this.tryInitializeMessageInterval !== null;
-  }
-
-  tryToConnectToServer() {
-    this.tryInitializeMessageInterval = setInterval(
-      tryToSendInitializeMessage,
-      500,
-      this
-    );
-  };
-
-  stopConnectingToServer() {
-    clearInterval(this.tryInitializeMessageInterval);
-    this.tryInitializeMessageInterval = null;
   }
 }
 
@@ -172,17 +188,8 @@ const postToURL = (url, requestBody) => new Promise((resolve, reject) => {
 });
 
 const tryToSendInitializeMessage = async (forwarder) => {
-  let success = true;
   await forwarder.postJSONRPCMessageToServer(
-    forwarder.storedInitializeMessage,
-    {
-      onConnectionRefused: () => {
-        success = false;
-      },
-    },
+    forwarder.state.initializeMessage,
+    { onConnectionRefused: () => {} },
   );
-
-  if (success) {
-    forwarder.stopConnectingToServer();
-  }
 };

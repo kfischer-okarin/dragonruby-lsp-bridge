@@ -33,18 +33,18 @@ test('Forwards JSON RPC requests to server', async () => {
     { status: 200, body: '{"response": "ok"}' },
   ]);
   bridgeProcess = startBridgeProcess();
+
   const response = await sendToBridgeProcess(bridgeProcess,
-                                             'Content-Length: 19\r\n' +
+                                             'Content-Length: 23\r\n' +
                                              '\r\n' +
-                                             '{"content":"hello"}');
+                                             '{"method":"initialize"}');
 
   assert.strictEqual(response,
                      'Content-Length: 18\r\n' +
                      '\r\n' +
                      '{"response": "ok"}');
-
   assert.deepStrictEqual(server.receivedRequests, [
-    { method: 'POST', url: '/dragon/lsp', body: '{"content":"hello"}' },
+    { method: 'POST', url: '/dragon/lsp', body: '{"method":"initialize"}' },
   ]);
 });
 
