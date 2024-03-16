@@ -81,6 +81,21 @@ test('Bridge process ignores messages while no server is started', async () => {
   ]);
 });
 
+test('Bridge process remembers initialize message until server starts', async () => {
+  bridgeProcess = await startBridgeProcess();
+  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"method": "initialize"}'));
+
+  server = await startStubServer(9001, [
+    { status: 200, body: '{"result": {}}' },
+  ]);
+
+  await waitForNextRequest(server);
+  assert.deepStrictEqual(server.receivedRequests, [
+    { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
+  ]);
+});
+
+
 test('Bridge process keeps initialize message around for server starts', async () => {
   bridgeProcess = await startBridgeProcess();
   await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"method": "initialize"}'));
