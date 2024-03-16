@@ -7,12 +7,14 @@ const {
   buildValidServerResponses,
   closeServerIfNecessary,
   ensureAllPromisesAreResolvedEveryTest,
+  fileExists,
   isPortUsed,
   killProcessIfNecessary,
   sendToRelayProcess,
   startRelayProcess,
   startStubServer,
   tryToReadFromStream,
+  waitUntilFileHasContent,
   waitUntilReceivedRequestCount,
 } = require('./testHelpers.js');
 
@@ -95,6 +97,18 @@ test('Remembers initialize message until server starts', async () => {
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
   ]);
+});
+
+test("Enters state 'waitingForEditor' before first message", async () => {
+  relayProcess = await startRelayProcess();
+  await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'waitingForEditor');
+});
+
+test('Removes state file after process ends', async () => {
+  relayProcess = await startRelayProcess();
+  await killProcessIfNecessary(relayProcess);
+  const stateFileExists = await fileExists('.lsp-dragonruby-relay-state');
+  assert.strictEqual(stateFileExists, false, 'State file should not exist but does');
 });
 
 // FLAKY

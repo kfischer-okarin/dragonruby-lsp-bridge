@@ -1,8 +1,11 @@
+const fs = require('fs');
 const http = require('http');
 
 exports.buildLspMessageRelay = () => new LspMessageRelay();
 
 class LspMessageRelay {
+  STATE_FILE_PATH = '.lsp-dragonruby-relay-state';
+
   #messageStreamReader;
 
   constructor() {
@@ -36,6 +39,13 @@ class LspMessageRelay {
       this.#state.initializeMessage,
       { onConnectionRefused: () => {} },
     );
+  }
+
+  shutdown() {
+    if (this.#state.connectInterval) {
+      clearInterval(this.#state.connectInterval);
+    }
+    fs.unlinkSync(this.STATE_FILE_PATH);
   }
 
   #processMessage(message) {
@@ -78,6 +88,7 @@ class LspMessageRelay {
 
   #waitForEditor() {
     this.#state = { waitingForEditor: true };
+    this.#writeStateToFile('waitingForEditor');
   }
 
   #startConnectingToServer(initializeMessage) {
@@ -113,6 +124,10 @@ class LspMessageRelay {
         this,
       ),
     };
+  }
+
+  #writeStateToFile(state) {
+    fs.writeFileSync(this.STATE_FILE_PATH, state);
   }
 }
 

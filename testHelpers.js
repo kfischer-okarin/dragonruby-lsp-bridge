@@ -1,4 +1,5 @@
 const { fork } = require('child_process');
+const fsPromise = require('fs/promises');
 const http = require('http');
 const test = require('node:test');
 
@@ -12,6 +13,39 @@ exports.ensureAllPromisesAreResolvedEveryTest = () => {
   test.afterEach(() => {
     clearInterval(keepTestAliveInterval);
   });
+};
+
+exports.readFile = (path) => fsPromise.readFile(path, 'utf8');
+
+exports.waitUntilFileHasContent = async (path, content) => {
+  let retries = 0;
+  while (retries < 10) {
+    try {
+      const fileContent = await exports.readFile(path);
+      if (fileContent === content) {
+        return;
+      }
+    } catch {
+      // File doesn't exist yet
+    }
+    retries++;
+    await exports.waitForMs(100);
+  }
+
+  if (!await exports.fileExists(path)) {
+    throw new Error(`File ${path} never appeared`);
+  }
+  const actualContent = await exports.readFile(path);
+  throw new Error(`File ${path} never had content ${content}. Actual content: ${actualContent}`);
+};
+
+exports.fileExists = async (path) => {
+  try {
+    await fsPromise.access(path);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 exports.startStubServer = (port, responses) => new Promise((resolve) => {
