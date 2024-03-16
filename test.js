@@ -8,15 +8,15 @@ const {
   closeServer,
   isPortUsed,
   killProcess,
-  sendToBridgeProcess,
+  sendToRelayProcess,
+  startRelayProcess,
   startStubServer,
-  startBridgeProcess,
   tryToReadFromStream,
   waitUntilReceivedRequestCount,
 } = require('./testHelpers.js');
 
 
-let bridgeProcess;
+let relayProcess;
 let server;
 
 test.before(async () => {
@@ -27,24 +27,24 @@ test.before(async () => {
 });
 
 test.afterEach(async () => {
-  if (bridgeProcess) {
-    await killProcess(bridgeProcess);
+  if (relayProcess) {
+    await killProcess(relayProcess);
   }
   if (server && server.listening) {
     await closeServer(server);
   }
 });
 
-test('Forwards LSP requests to server', async () => {
+test('Relays LSP requests to server and responses from server', async () => {
   server = await startStubServer(9001, [
     { status: 200, body: '{"response": "ok"}' },
   ]);
-  bridgeProcess = await startBridgeProcess();
+  relayProcess = await startRelayProcess();
 
-  const response = await sendToBridgeProcess(bridgeProcess,
-                                             'Content-Length: 23\r\n' +
-                                             '\r\n' +
-                                             '{"method":"initialize"}');
+  const response = await sendToRelayProcess(relayProcess,
+                                            'Content-Length: 23\r\n' +
+                                            '\r\n' +
+                                            '{"method":"initialize"}');
 
   assert.strictEqual(response,
                      'Content-Length: 18\r\n' +
@@ -60,29 +60,29 @@ test('Shows no output when server replies with 204', async () => {
     ...buildValidServerResponses(1),
     { status: 204, body: '' },
   ]);
-  bridgeProcess = await startBridgeProcess();
-  await sendToBridgeProcess(bridgeProcess, buildInitializeMessage());
+  relayProcess = await startRelayProcess();
+  await sendToRelayProcess(relayProcess, buildInitializeMessage());
 
-  const response = await sendToBridgeProcess(bridgeProcess, buildRandomMessage());
+  const response = await sendToRelayProcess(relayProcess, buildRandomMessage());
 
   assert.strictEqual(response, null);
 });
 
-test('Bridge process ignores messages while no server is started', async () => {
-  bridgeProcess = await startBridgeProcess();
-  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"messageNumber": 1}'));
+test('Ignores messages while no server is started', async () => {
+  relayProcess = await startRelayProcess();
+  await sendToRelayProcess(relayProcess, buildLSPMessage('{"messageNumber": 1}'));
 
   server = await startStubServer(9001, buildValidServerResponses(1));
-  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"messageNumber": 2}'));
+  await sendToRelayProcess(relayProcess, buildLSPMessage('{"messageNumber": 2}'));
 
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', url: '/dragon/lsp', body: '{"messageNumber": 2}' },
   ]);
 });
 
-test('Bridge process remembers initialize message until server starts', async () => {
-  bridgeProcess = await startBridgeProcess();
-  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"method": "initialize"}'));
+test('Remembers initialize message until server starts', async () => {
+  relayProcess = await startRelayProcess();
+  await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
 
   server = await startStubServer(9001, [
     { status: 200, body: '{"result": {}}' },
@@ -95,12 +95,12 @@ test('Bridge process remembers initialize message until server starts', async ()
 });
 
 // FLAKY
-test('Bridge process sends same initialize message again when server restarts', async () => {
-  bridgeProcess = await startBridgeProcess();
+test('Sends same initialize message again when server restarts', async () => {
+  relayProcess = await startRelayProcess();
   server = await startStubServer(9001, buildValidServerResponses(1));
-  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"method": "initialize"}'));
+  await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
   await closeServer(server);
-  await sendToBridgeProcess(bridgeProcess, buildRandomMessage());
+  await sendToRelayProcess(relayProcess, buildRandomMessage());
   // TODO: Wait for process state to change to "reconnecting"
 
   server = await startStubServer(9001, buildValidServerResponses(1));
@@ -109,7 +109,7 @@ test('Bridge process sends same initialize message again when server restarts', 
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
   ]);
-  const response = await tryToReadFromStream(bridgeProcess.stdout);
+  const response = await tryToReadFromStream(relayProcess.stdout);
   // Don't deliver initialized response again
   assert.strictEqual(response, null);
 });

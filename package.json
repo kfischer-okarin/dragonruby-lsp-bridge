@@ -1,5 +1,5 @@
 {
-  "name": "dragonruby-lsp-bridge",
+  "name": "dragonruby-lsp-relay",
   "version": "1.0.0",
   "description": "Forwards LSP requests to a local running DragonRuby instance",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-bridge.git"
+    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-relay.git"
   },
   "keywords": [
     "LSP",
@@ -18,7 +18,7 @@
   "author": "Kevin Fischer",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-bridge/issues"
+    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-relay/issues"
   },
-  "homepage": "https://github.com/kfischer-okarin/dragonruby-lsp-bridge"
+  "homepage": "https://github.com/kfischer-okarin/dragonruby-lsp-relay"
 }

@@ -1,1 +1,1 @@
-# DragonRuby LSP Bridge
+# DragonRuby LSP Relay
