@@ -1,7 +1,15 @@
 const { fork } = require('child_process');
+const events = require('events');
 const fsPromise = require('fs/promises');
 const http = require('http');
 const test = require('node:test');
+
+// Node 18.17.1 has still a buggy behaviour for stopping tests
+// But I need to use 18.17.1 since that is the version that VS Code uses (as of January 2024)
+if (process.version !== 'v18.17.1') {
+  process.emitWarning('Check if you can remove the defaultMaxListeners override');
+}
+events.EventEmitter.defaultMaxListeners = 1000;
 
 exports.ensureAllPromisesAreResolvedEveryTest = () => {
   let keepTestAliveInterval;
