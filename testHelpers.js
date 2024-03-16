@@ -81,6 +81,7 @@ exports.startStubServer = (port, responses) => new Promise((resolve) => {
       server.receivedRequests.push({
         url: req.url,
         method: req.method,
+        contentLength: parseInt(req.headers['content-length'], 10),
         body,
       });
 

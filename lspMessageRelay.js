@@ -230,6 +230,7 @@ const postToURL = (url, requestBody) => new Promise((resolve, reject) => {
 
   request.on('error', reject);
   request.setHeader('Content-Type', 'application/json');
+  request.setHeader('Content-Length', requestBody.length);
   request.write(requestBody);
   request.end();
 });

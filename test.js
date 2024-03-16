@@ -60,7 +60,7 @@ test.describe('LSP message relay', () => {
                        '\r\n' +
                        '{"response": "ok"}');
     assert.deepStrictEqual(server.receivedRequests, [
-      { method: 'POST', url: '/dragon/lsp', body: '{"method":"initialize"}' },
+      { method: 'POST', url: '/dragon/lsp', body: '{"method":"initialize"}', contentLength: 23 },
     ]);
   });
 
@@ -85,7 +85,7 @@ test.describe('LSP message relay', () => {
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"messageNumber": 2}'));
 
     assert.deepStrictEqual(server.receivedRequests, [
-      { method: 'POST', url: '/dragon/lsp', body: '{"messageNumber": 2}' },
+      { method: 'POST', url: '/dragon/lsp', body: '{"messageNumber": 2}', contentLength: 20 },
     ]);
   });
 
@@ -99,7 +99,7 @@ test.describe('LSP message relay', () => {
     await waitUntilReceivedRequestCount(server, 1);
 
     assert.deepStrictEqual(server.receivedRequests, [
-      { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
+      { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}', contentLength: 24 },
     ]);
   });
 
@@ -115,7 +115,7 @@ test.describe('LSP message relay', () => {
     await waitUntilReceivedRequestCount(server, 1);
 
     assert.deepStrictEqual(server.receivedRequests, [
-      { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
+      { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}', contentLength: 24 },
     ]);
     const response = await tryToReadFromStream(relayProcess.stdout);
     // Don't deliver initialized response again
