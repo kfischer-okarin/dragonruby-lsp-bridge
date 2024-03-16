@@ -4,7 +4,6 @@ const {
   buildInitializeMessage,
   buildLSPMessage,
   buildRandomMessage,
-  buildValidMessage,
   buildValidServerResponses,
   closeServer,
   isPortUsed,
@@ -13,7 +12,6 @@ const {
   startStubServer,
   startBridgeProcess,
   tryToReadFromStream,
-  waitForNextRequest,
   waitUntilReceivedRequestCount,
 } = require('./testHelpers.js');
 
@@ -96,35 +94,22 @@ test('Bridge process remembers initialize message until server starts', async ()
   ]);
 });
 
-
-test('Bridge process keeps initialize message around for server starts', async () => {
+// FLAKY
+test('Bridge process sends same initialize message again when server restarts', async () => {
   bridgeProcess = await startBridgeProcess();
+  server = await startStubServer(9001, buildValidServerResponses(1));
   await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"method": "initialize"}'));
+  await closeServer(server);
+  await sendToBridgeProcess(bridgeProcess, buildRandomMessage());
+  // TODO: Wait for process state to change to "reconnecting"
 
-  server = await startStubServer(9001, [
-    { status: 200, body: '{"result": {}}' },
-  ]);
-
-  await waitForNextRequest(server);
-  assert.deepStrictEqual(server.receivedRequests, [
-    { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
-  ]);
-  let response = await tryToReadFromStream(bridgeProcess.stdout);
-  assert.strictEqual(response,
-                     'Content-Length: 14\r\n' +
-                     '\r\n' +
-                     '{"result": {}}');
-
-  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"ignored": "message"}'));
-  server = await startStubServer(9001, [
-    { status: 200, body: '{"response": "ok"}' },
-  ]);
-  await waitForNextRequest(server);
+  server = await startStubServer(9001, buildValidServerResponses(1));
+  await waitUntilReceivedRequestCount(server, 1);
 
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
   ]);
-  response = await tryToReadFromStream(bridgeProcess.stdout);
+  const response = await tryToReadFromStream(bridgeProcess.stdout);
   // Don't deliver initialized response again
   assert.strictEqual(response, null);
 });

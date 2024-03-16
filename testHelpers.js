@@ -75,19 +75,6 @@ exports.killProcess = (process) => new Promise((resolve) => {
   process.kill();
 });
 
-exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
-  const timeout = setTimeout(() => {
-    reject(new Error('Timed out waiting for request'));
-  }, 1000);
-
-  server.once('request', (req) => {
-    req.on('end', () => {
-      clearTimeout(timeout);
-      resolve();
-    });
-  });
-});
-
 exports.waitUntilReceivedRequestCount = (server, count) => new Promise((resolve, reject) => {
   let retries = 0;
   const interval = setInterval(() => {
@@ -106,8 +93,6 @@ exports.waitUntilReceivedRequestCount = (server, count) => new Promise((resolve,
     }
   }, 100);
 });
-
-
 
 exports.tryToReadFromStream = (stream) => new Promise((resolve) => {
   let readAndResolve;
@@ -139,8 +124,6 @@ exports.buildLSPMessage = (content) => (
 exports.buildInitializeMessage = () => exports.buildLSPMessage(`{"method":"initialize", "id": ${Math.random()}}`);
 
 exports.buildRandomMessage = () => exports.buildLSPMessage(`{"content":"${Math.random()}"}`);
-
-exports.buildValidMessage = () => exports.buildLSPMessage('{"content":"hello"}');
 
 exports.buildValidServerResponses = (numResponses) => {
   const responses = [];
