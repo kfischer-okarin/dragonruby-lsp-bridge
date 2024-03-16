@@ -14,6 +14,7 @@ const {
   startBridgeProcess,
   tryToReadFromStream,
   waitForNextRequest,
+  waitUntilReceivedRequestCount,
 } = require('./testHelpers.js');
 
 
@@ -88,8 +89,8 @@ test('Bridge process remembers initialize message until server starts', async ()
   server = await startStubServer(9001, [
     { status: 200, body: '{"result": {}}' },
   ]);
+  await waitUntilReceivedRequestCount(server, 1);
 
-  await waitForNextRequest(server);
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', url: '/dragon/lsp', body: '{"method": "initialize"}' },
   ]);

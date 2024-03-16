@@ -88,6 +88,27 @@ exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
   });
 });
 
+exports.waitUntilReceivedRequestCount = (server, count) => new Promise((resolve, reject) => {
+  let retries = 0;
+  const interval = setInterval(() => {
+    if (server.receivedRequests.length >= count) {
+      clearInterval(interval);
+      resolve();
+      return;
+    }
+    retries++;
+
+    if (retries > 10) {
+      clearInterval(interval);
+      reject(
+        new Error(`Timed out waiting for ${count} requests.\nReceived:\n${JSON.stringify(server.receivedRequests)}`)
+      );
+    }
+  }, 100);
+});
+
+
+
 exports.tryToReadFromStream = (stream) => new Promise((resolve) => {
   let readAndResolve;
 
