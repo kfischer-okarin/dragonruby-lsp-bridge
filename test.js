@@ -16,6 +16,7 @@ const {
   tryToReadFromStream,
   waitUntilFileHasContent,
   waitUntilReceivedRequestCount,
+  waitUntilRelayProcessHasState,
 } = require('./testHelpers.js');
 
 
@@ -106,7 +107,7 @@ test.describe('LSP message relay', () => {
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
     await closeServerIfNecessary(server);
     await sendToRelayProcess(relayProcess, buildRandomMessage());
-    await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'reconnectingToServer');
+    await waitUntilRelayProcessHasState('reconnectingToServer');
 
     server = await startStubServer(9001, buildValidServerResponses(1));
     await waitUntilReceivedRequestCount(server, 1);

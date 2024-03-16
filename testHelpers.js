@@ -121,6 +121,11 @@ exports.sendToRelayProcess = (relayProcess, message) => {
   return exports.tryToReadFromStream(relayProcess.stdout);
 };
 
+exports.waitUntilRelayProcessHasState = (state) => exports.waitUntilFileHasContent(
+  '.lsp-dragonruby-relay-state',
+  state
+);
+
 exports.killProcessIfNecessary = (process) => new Promise((resolve) => {
   if (process.killed || process.exitCode !== null) {
     resolve();
