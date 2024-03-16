@@ -40,7 +40,11 @@ exports.startStubServer = (port, responses) => new Promise((resolve) => {
   server.listen(port, 'localhost');
 });
 
-exports.closeServer = (server) => new Promise((resolve) => {
+exports.closeServerIfNecessary = (server) => new Promise((resolve) => {
+  if (!server.listening) {
+    resolve();
+    return;
+  }
   server.close(resolve);
 });
 
@@ -70,7 +74,11 @@ exports.sendToRelayProcess = (relayProcess, message) => {
   return exports.tryToReadFromStream(relayProcess.stdout);
 };
 
-exports.killProcess = (process) => new Promise((resolve) => {
+exports.killProcessIfNecessary = (process) => new Promise((resolve) => {
+  if (process.killed || process.exitCode !== null) {
+    resolve();
+    return;
+  }
   process.on('exit', resolve);
   process.kill();
 });

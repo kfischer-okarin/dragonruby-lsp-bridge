@@ -5,9 +5,9 @@ const {
   buildLSPMessage,
   buildRandomMessage,
   buildValidServerResponses,
-  closeServer,
+  closeServerIfNecessary,
   isPortUsed,
-  killProcess,
+  killProcessIfNecessary,
   sendToRelayProcess,
   startRelayProcess,
   startStubServer,
@@ -28,10 +28,10 @@ test.before(async () => {
 
 test.afterEach(async () => {
   if (relayProcess) {
-    await killProcess(relayProcess);
+    await killProcessIfNecessary(relayProcess);
   }
-  if (server && server.listening) {
-    await closeServer(server);
+  if (server) {
+    await closeServerIfNecessary(server);
   }
 });
 
@@ -99,7 +99,7 @@ test('Sends same initialize message again when server restarts', async () => {
   relayProcess = await startRelayProcess();
   server = await startStubServer(9001, buildValidServerResponses(1));
   await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
-  await closeServer(server);
+  await closeServerIfNecessary(server);
   await sendToRelayProcess(relayProcess, buildRandomMessage());
   // TODO: Wait for process state to change to "reconnecting"
 
