@@ -1,7 +1,7 @@
-const { buildLspMessageForwarder } = require('./lspMessageForwarder');
+const { buildLspMessageRelay } = require('./lspMessageRelay');
 
-const forwarder = buildLspMessageForwarder();
+const relay = buildLspMessageRelay();
 
 process.stdin.on('data', async (data) => {
-  forwarder.processIncomingData(data.toString());
+  relay.processIncomingData(data.toString());
 });

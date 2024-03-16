@@ -1,8 +1,8 @@
 const http = require('http');
 
-exports.buildLspMessageForwarder = () => new LspMessageForwarder();
+exports.buildLspMessageRelay = () => new LspMessageRelay();
 
-class LspMessageForwarder {
+class LspMessageRelay {
   #messageStreamReader;
 
   constructor() {
