@@ -56,6 +56,12 @@ exports.fileExists = async (path) => {
   }
 };
 
+exports.deleteFileIfNecessary = async (path) => {
+  if (await exports.fileExists(path)) {
+    await fsPromise.unlink(path);
+  }
+};
+
 exports.startStubServer = (port, responses) => new Promise((resolve) => {
   const server = http.createServer();
 

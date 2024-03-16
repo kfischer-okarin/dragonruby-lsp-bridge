@@ -7,8 +7,11 @@ class LspMessageRelay {
   STATE_FILE_PATH = '.lsp-dragonruby-relay-state';
 
   #messageStreamReader;
+  #logFileName;
 
   constructor() {
+    this.#logFileName = 'output.log';
+    fs.writeFileSync(this.#logFileName, '');
     this.#messageStreamReader = new LspMessageStreamReader();
     this.#waitForEditor();
   }
@@ -52,6 +55,8 @@ class LspMessageRelay {
     if (this.#state.waitingForEditor && isInitializeMessage(message)) {
       this.#startConnectingToServer(message);
     }
+
+    this.#log(`request ${message.raw}`);
   }
 
   async #postLspMessageToServer(message, { onConnectionRefused }) {
@@ -69,6 +74,8 @@ class LspMessageRelay {
             '\r\n' +
             response.body
         );
+
+        this.#log(`response ${response.body}`);
       }
 
       if (this.#state.connectingToServer) {
@@ -131,6 +138,10 @@ class LspMessageRelay {
 
   #writeStateToFile(state) {
     fs.writeFileSync(this.STATE_FILE_PATH, state);
+  }
+
+  #log(message) {
+    fs.appendFileSync(this.#logFileName, `${new Date().toISOString()} ${message}\n`);
   }
 }
 

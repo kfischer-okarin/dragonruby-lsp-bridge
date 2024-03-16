@@ -6,10 +6,12 @@ const {
   buildRandomMessage,
   buildValidServerResponses,
   closeServerIfNecessary,
+  deleteFileIfNecessary,
   ensureAllPromisesAreResolvedEveryTest,
   fileExists,
   isPortUsed,
   killProcessIfNecessary,
+  readFile,
   sendToRelayProcess,
   startRelayProcess,
   startStubServer,
@@ -154,5 +156,26 @@ test.describe('States', () => {
     await killProcessIfNecessary(relayProcess);
     const stateFileExists = await fileExists('.lsp-dragonruby-relay-state');
     assert.strictEqual(stateFileExists, false, 'State file should not exist but does');
+  });
+});
+
+test.describe('Logging requests', () => {
+  test.afterEach(async () => {
+    await deleteFileIfNecessary('output.log');
+  });
+
+  test('Logs requests to file when starting with --log flag', async () => {
+    relayProcess = await startRelayProcess('--log output.log');
+    server = await startStubServer(9001, [
+      { status: 200, body: '{"response": "ok"}' },
+    ]);
+    await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
+
+    const logContent = await readFile('output.log');
+    const logLines = logContent.trim().split('\n');
+
+    assert.strictEqual(logLines.length, 2);
+    assert.match(logLines[0], /.+ request \{"method": "initialize"\}/);
+    assert.match(logLines[1], /.+ response \{"response": "ok"\}/);
   });
 });
