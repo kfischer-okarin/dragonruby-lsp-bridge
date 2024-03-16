@@ -1,6 +1,6 @@
-const { buildJsonRpcForwarder } = require('./jsonRpcForwarder');
+const { buildLspMessageForwarder } = require('./lspMessageForwarder');
 
-const forwarder = buildJsonRpcForwarder();
+const forwarder = buildLspMessageForwarder();
 
 process.stdin.on('data', async (data) => {
   forwarder.processIncomingData(data.toString());

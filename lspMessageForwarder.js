@@ -1,12 +1,12 @@
 const http = require('http');
 
-exports.buildJsonRpcForwarder = () => new JsonRpcForwarder();
+exports.buildLspMessageForwarder = () => new LspMessageForwarder();
 
-class JsonRpcForwarder {
+class LspMessageForwarder {
   #messageStreamReader;
 
   constructor() {
-    this.#messageStreamReader = new JSONRPCMessageStreamReader();
+    this.#messageStreamReader = new LspMessageStreamReader();
     this.#waitForEditor();
   }
 
@@ -18,7 +18,7 @@ class JsonRpcForwarder {
 
       this.#processMessage(message);
 
-      await this.#postJSONRPCMessageToServer(
+      await this.#postLspMessageToServer(
         message,
         {
           onConnectionRefused: () => {
@@ -32,7 +32,7 @@ class JsonRpcForwarder {
   }
 
   postInitializeMessageToServer() {
-    this.#postJSONRPCMessageToServer(
+    this.#postLspMessageToServer(
       this.#state.initializeMessage,
       { onConnectionRefused: () => {} },
     );
@@ -44,7 +44,7 @@ class JsonRpcForwarder {
     }
   }
 
-  async #postJSONRPCMessageToServer(message, { onConnectionRefused }) {
+  async #postLspMessageToServer(message, { onConnectionRefused }) {
     try {
       const response = await postToURL('http://localhost:9001/dragon/lsp', message.raw);
 
@@ -118,7 +118,7 @@ class JsonRpcForwarder {
 
 // --- private functions ---
 
-class JSONRPCMessageStreamReader {
+class LspMessageStreamReader {
   #collectedData;
   #readyMessages;
 
@@ -138,14 +138,14 @@ class JSONRPCMessageStreamReader {
   processIncomingData(data) {
     this.#collectedData += data;
 
-    let message = this.#tryToReadJSONRPCMessage();
+    let message = this.#tryToConsumeLspMessage();
     while (message) {
       this.#readyMessages.push(message);
-      message = this.#tryToReadJSONRPCMessage();
+      message = this.#tryToConsumeLspMessage();
     }
   }
 
-  #tryToReadJSONRPCMessage() {
+  #tryToConsumeLspMessage() {
     const headerMatch = this.#collectedData.match(/Content-Length: (\d+)\r\n\r\n/);
     if (!headerMatch) {
       return null;
