@@ -1,7 +1,7 @@
 const { fork } = require('child_process');
 const http = require('http');
 
-exports.startStubServer = (port, responses) => {
+exports.startStubServer = (port, responses) => new Promise((resolve) => {
   const server = http.createServer();
 
   server.receivedRequests = [];
@@ -33,10 +33,12 @@ exports.startStubServer = (port, responses) => {
     });
   });
 
-  server.listen(port, 'localhost');
+  server.on('listening', () => {
+    resolve(server);
+  });
 
-  return server;
-}
+  server.listen(port, 'localhost');
+});
 
 exports.closeServer = (server) => new Promise((resolve) => {
   server.close(resolve);
