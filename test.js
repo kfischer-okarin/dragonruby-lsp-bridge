@@ -104,6 +104,28 @@ test("Enters state 'waitingForEditor' before first message", async () => {
   await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'waitingForEditor');
 });
 
+test("Enters state 'connectingToServer' after initialize message", async () => {
+  relayProcess = await startRelayProcess();
+  await sendToRelayProcess(relayProcess, buildInitializeMessage());
+  await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'connectingToServer');
+});
+
+test("Enters state 'connectedToServer' after server responds to initialize message", async () => {
+  relayProcess = await startRelayProcess();
+  server = await startStubServer(9001, buildValidServerResponses(1));
+  await sendToRelayProcess(relayProcess, buildInitializeMessage());
+  await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'connectedToServer');
+});
+
+test("Enters state 'reconnectingToServer' after server connection is lost", async () => {
+  relayProcess = await startRelayProcess();
+  server = await startStubServer(9001, buildValidServerResponses(1));
+  await sendToRelayProcess(relayProcess, buildInitializeMessage());
+  await closeServerIfNecessary(server);
+  await sendToRelayProcess(relayProcess, buildRandomMessage());
+  await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'reconnectingToServer');
+});
+
 test('Removes state file after process ends', async () => {
   relayProcess = await startRelayProcess();
   await killProcessIfNecessary(relayProcess);

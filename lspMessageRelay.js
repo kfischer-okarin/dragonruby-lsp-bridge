@@ -101,6 +101,7 @@ class LspMessageRelay {
         this,
       ),
     };
+    this.#writeStateToFile('connectingToServer');
   }
 
   #startForwardingMessages() {
@@ -112,6 +113,7 @@ class LspMessageRelay {
       connectedToServer: true,
       initializeMessage: this.#state.initializeMessage
     };
+    this.#writeStateToFile('connectedToServer');
   }
 
   #startReconnectingToServer() {
@@ -124,6 +126,7 @@ class LspMessageRelay {
         this,
       ),
     };
+    this.#writeStateToFile('reconnectingToServer');
   }
 
   #writeStateToFile(state) {
