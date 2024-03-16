@@ -115,6 +115,10 @@ exports.buildJSONRPCMessage = (content) => (
     content
 );
 
+exports.buildInitializeMessage = () => exports.buildJSONRPCMessage(`{"method":"initialize", "id": ${Math.random()}}`);
+
+exports.buildRandomMessage = () => exports.buildJSONRPCMessage(`{"content":"${Math.random()}"}`);
+
 exports.buildValidMessage = () => exports.buildJSONRPCMessage('{"content":"hello"}');
 
 exports.buildValidServerResponses = (numResponses) => {

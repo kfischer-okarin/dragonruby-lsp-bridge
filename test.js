@@ -1,7 +1,9 @@
 const assert = require('assert');
 const test = require('node:test');
 const {
+  buildInitializeMessage,
   buildJSONRPCMessage,
+  buildRandomMessage,
   buildValidMessage,
   buildValidServerResponses,
   closeServer,
@@ -56,11 +58,14 @@ test('Forwards JSON RPC requests to server', async () => {
 
 test('Shows no output when server replies with 204', async () => {
   server = await startStubServer(9001, [
+    ...buildValidServerResponses(1),
     { status: 204, body: '' },
   ]);
   bridgeProcess = await startBridgeProcess();
+  await sendToBridgeProcess(bridgeProcess, buildInitializeMessage());
 
-  const response = await sendToBridgeProcess(bridgeProcess, buildValidMessage());
+  const response = await sendToBridgeProcess(bridgeProcess, buildRandomMessage());
+
   assert.strictEqual(response, null);
 });
 
