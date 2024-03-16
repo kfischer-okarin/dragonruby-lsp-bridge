@@ -4,7 +4,9 @@ const {
   buildJSONRPCMessage,
   buildValidMessage,
   buildValidServerResponses,
+  closeServer,
   isPortUsed,
+  killProcess,
   sendToBridgeProcess,
   startStubServer,
   startBridgeProcess,
@@ -23,12 +25,12 @@ test.before(async () => {
   }
 });
 
-test.afterEach(() => {
+test.afterEach(async () => {
   if (bridgeProcess) {
-    bridgeProcess.kill();
+    await killProcess(bridgeProcess);
   }
   if (server && server.listening) {
-    server.close();
+    await closeServer(server);
   }
 });
 

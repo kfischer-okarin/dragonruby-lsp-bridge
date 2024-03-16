@@ -38,6 +38,10 @@ exports.startStubServer = (port, responses) => {
   return server;
 }
 
+exports.closeServer = (server) => new Promise((resolve) => {
+  server.close(resolve);
+});
+
 exports.isPortUsed = (port) => new Promise((resolve) => {
   const request = http.request(
     `http://localhost:${port}`,
@@ -58,6 +62,11 @@ exports.sendToBridgeProcess = (bridgeProcess, message) => {
   bridgeProcess.stdin.write(message);
   return exports.tryToReadFromStream(bridgeProcess.stdout);
 };
+
+exports.killProcess = (process) => new Promise((resolve) => {
+  process.on('exit', resolve);
+  process.kill();
+});
 
 exports.waitForNextRequest = (server) => new Promise((resolve, reject) => {
   const timeout = setTimeout(() => {
