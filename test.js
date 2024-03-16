@@ -6,6 +6,7 @@ const {
   buildRandomMessage,
   buildValidServerResponses,
   closeServerIfNecessary,
+  ensureAllPromisesAreResolvedEveryTest,
   isPortUsed,
   killProcessIfNecessary,
   sendToRelayProcess,
@@ -15,6 +16,8 @@ const {
   waitUntilReceivedRequestCount,
 } = require('./testHelpers.js');
 
+
+ensureAllPromisesAreResolvedEveryTest();
 
 let relayProcess;
 let server;

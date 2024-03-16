@@ -1,5 +1,18 @@
 const { fork } = require('child_process');
 const http = require('http');
+const test = require('node:test');
+
+exports.ensureAllPromisesAreResolvedEveryTest = () => {
+  let keepTestAliveInterval;
+
+  test.beforeEach(() => {
+    keepTestAliveInterval = setInterval(() => {}, 1000);
+  });
+
+  test.afterEach(() => {
+    clearInterval(keepTestAliveInterval);
+  });
+};
 
 exports.startStubServer = (port, responses) => new Promise((resolve) => {
   const server = http.createServer();
