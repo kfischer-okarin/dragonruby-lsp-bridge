@@ -123,8 +123,9 @@ exports.isPortUsed = (port) => new Promise((resolve) => {
   request.end();
 });
 
-exports.startRelayProcess = () => new Promise((resolve) => {
-  const relayProcess = fork('./index.js', { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
+exports.startRelayProcess = (args) => new Promise((resolve) => {
+  const argsList = args ? args.split(' ') : [];
+  const relayProcess = fork('./index.js', argsList, { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
   relayProcess.on('spawn', () => {
     resolve(relayProcess);
   });

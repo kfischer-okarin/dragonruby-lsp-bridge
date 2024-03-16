@@ -178,4 +178,13 @@ test.describe('Logging requests', () => {
     assert.match(logLines[0], /.+ request \{"method": "initialize"\}/);
     assert.match(logLines[1], /.+ response \{"response": "ok"\}/);
   });
+
+  test('Logs nothing when not starting with --log flag', async () => {
+    relayProcess = await startRelayProcess();
+    server = await startStubServer(9001, buildValidServerResponses(1));
+    await sendToRelayProcess(relayProcess, buildInitializeMessage());
+
+    const logFileExists = await fileExists('output.log');
+    assert.strictEqual(logFileExists, false, 'Log file should not exist but does');
+  });
 });
