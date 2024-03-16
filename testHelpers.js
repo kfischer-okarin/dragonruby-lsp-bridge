@@ -109,17 +109,17 @@ exports.waitForMs = (ms) => new Promise((resolve) => {
   setTimeout(resolve, ms);
 });
 
-exports.buildJSONRPCMessage = (content) => (
+exports.buildLSPMessage = (content) => (
   `Content-Length: ${content.length}\r\n` +
     '\r\n' +
     content
 );
 
-exports.buildInitializeMessage = () => exports.buildJSONRPCMessage(`{"method":"initialize", "id": ${Math.random()}}`);
+exports.buildInitializeMessage = () => exports.buildLSPMessage(`{"method":"initialize", "id": ${Math.random()}}`);
 
-exports.buildRandomMessage = () => exports.buildJSONRPCMessage(`{"content":"${Math.random()}"}`);
+exports.buildRandomMessage = () => exports.buildLSPMessage(`{"content":"${Math.random()}"}`);
 
-exports.buildValidMessage = () => exports.buildJSONRPCMessage('{"content":"hello"}');
+exports.buildValidMessage = () => exports.buildLSPMessage('{"content":"hello"}');
 
 exports.buildValidServerResponses = (numResponses) => {
   const responses = [];

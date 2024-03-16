@@ -2,7 +2,7 @@ const assert = require('assert');
 const test = require('node:test');
 const {
   buildInitializeMessage,
-  buildJSONRPCMessage,
+  buildLSPMessage,
   buildRandomMessage,
   buildValidMessage,
   buildValidServerResponses,
@@ -71,10 +71,10 @@ test('Shows no output when server replies with 204', async () => {
 
 test('Bridge process ignores messages while no server is started', async () => {
   bridgeProcess = await startBridgeProcess();
-  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"messageNumber": 1}'));
+  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"messageNumber": 1}'));
 
   server = await startStubServer(9001, buildValidServerResponses(1));
-  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"messageNumber": 2}'));
+  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"messageNumber": 2}'));
 
   assert.deepStrictEqual(server.receivedRequests, [
     { method: 'POST', url: '/dragon/lsp', body: '{"messageNumber": 2}' },
@@ -83,7 +83,7 @@ test('Bridge process ignores messages while no server is started', async () => {
 
 test('Bridge process keeps initialize message around for server starts', async () => {
   bridgeProcess = await startBridgeProcess();
-  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"method": "initialize"}'));
+  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"method": "initialize"}'));
 
   server = await startStubServer(9001, [
     { status: 200, body: '{"result": {}}' },
@@ -99,7 +99,7 @@ test('Bridge process keeps initialize message around for server starts', async (
                      '\r\n' +
                      '{"result": {}}');
 
-  await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"ignored": "message"}'));
+  await sendToBridgeProcess(bridgeProcess, buildLSPMessage('{"ignored": "message"}'));
   server = await startStubServer(9001, [
     { status: 200, body: '{"response": "ok"}' },
   ]);
