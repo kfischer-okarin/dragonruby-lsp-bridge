@@ -36,7 +36,7 @@ test.afterEach(async () => {
   }
 });
 
-test('Forwards JSON RPC requests to server', async () => {
+test('Forwards LSP requests to server', async () => {
   server = await startStubServer(9001, [
     { status: 200, body: '{"response": "ok"}' },
   ]);
