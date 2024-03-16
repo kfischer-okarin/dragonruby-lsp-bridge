@@ -156,7 +156,7 @@ exports.tryToReadFromStream = (stream) => new Promise((resolve) => {
     resolve(null);
     // Already resolved, so we don't want to resolve again on unrelated later reads
     stream.removeListener('readable', readAndResolve);
-  }, 50);
+  }, 100);
 
   readAndResolve = () => {
     clearTimeout(readTimeout);
