@@ -133,14 +133,13 @@ test('Removes state file after process ends', async () => {
   assert.strictEqual(stateFileExists, false, 'State file should not exist but does');
 });
 
-// FLAKY
 test('Sends same initialize message again when server restarts', async () => {
   relayProcess = await startRelayProcess();
   server = await startStubServer(9001, buildValidServerResponses(1));
   await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
   await closeServerIfNecessary(server);
   await sendToRelayProcess(relayProcess, buildRandomMessage());
-  // TODO: Wait for process state to change to "reconnecting"
+  await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'reconnectingToServer');
 
   server = await startStubServer(9001, buildValidServerResponses(1));
   await waitUntilReceivedRequestCount(server, 1);
