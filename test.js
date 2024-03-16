@@ -38,7 +38,7 @@ test('Forwards JSON RPC requests to server', async () => {
   server = await startStubServer(9001, [
     { status: 200, body: '{"response": "ok"}' },
   ]);
-  bridgeProcess = startBridgeProcess();
+  bridgeProcess = await startBridgeProcess();
 
   const response = await sendToBridgeProcess(bridgeProcess,
                                              'Content-Length: 23\r\n' +
@@ -58,14 +58,14 @@ test('Shows no output when server replies with 204', async () => {
   server = await startStubServer(9001, [
     { status: 204, body: '' },
   ]);
-  bridgeProcess = startBridgeProcess();
+  bridgeProcess = await startBridgeProcess();
 
   const response = await sendToBridgeProcess(bridgeProcess, buildValidMessage());
   assert.strictEqual(response, null);
 });
 
 test('Bridge process ignores messages while no server is started', async () => {
-  bridgeProcess = startBridgeProcess();
+  bridgeProcess = await startBridgeProcess();
   await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"messageNumber": 1}'));
 
   server = await startStubServer(9001, buildValidServerResponses(1));
@@ -77,7 +77,7 @@ test('Bridge process ignores messages while no server is started', async () => {
 });
 
 test('Bridge process keeps initialize message around for server starts', async () => {
-  bridgeProcess = startBridgeProcess();
+  bridgeProcess = await startBridgeProcess();
   await sendToBridgeProcess(bridgeProcess, buildJSONRPCMessage('{"method": "initialize"}'));
 
   server = await startStubServer(9001, [

@@ -58,7 +58,12 @@ exports.isPortUsed = (port) => new Promise((resolve) => {
   request.end();
 });
 
-exports.startBridgeProcess = () => fork('./index.js', { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
+exports.startBridgeProcess = () => new Promise((resolve) => {
+  const bridgeProcess = fork('./index.js', { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
+  bridgeProcess.on('spawn', () => {
+    resolve(bridgeProcess);
+  });
+});
 
 exports.sendToBridgeProcess = (bridgeProcess, message) => {
   bridgeProcess.stdin.write(message);
