@@ -1,4 +1,5 @@
 const assert = require('assert');
+const fsPromises = require('fs/promises');
 const test = require('node:test');
 const {
   buildInitializeMessage,
@@ -190,5 +191,15 @@ test.describe('Logging requests', () => {
 
     const logFileExists = await fileExists('output.log');
     assert.strictEqual(logFileExists, false, 'Log file should not exist but does');
+  });
+});
+
+test.describe('Git Ignored data folder', () => {
+  test('Creates .dragonruby-lsp-relay folder in current directory', async () => {
+    relayProcess = await startRelayProcess();
+
+    const dataFolderStats = await fsPromises.stat('.dragonruby-lsp-relay');
+
+    assert.ok(dataFolderStats.isDirectory(), '.dragonruby-lsp-relay is not a directory');
   });
 });
