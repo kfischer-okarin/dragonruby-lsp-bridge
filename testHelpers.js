@@ -138,7 +138,7 @@ exports.sendToRelayProcess = (relayProcess, message) => {
 };
 
 exports.waitUntilRelayProcessHasState = (state) => exports.waitUntilFileHasContent(
-  '.lsp-dragonruby-relay-state',
+  '.dragonruby-lsp-relay/state',
   state
 );
 

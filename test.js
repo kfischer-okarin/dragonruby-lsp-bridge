@@ -143,7 +143,7 @@ test.describe('Git Ignored data folder', () => {
 });
 
 test.describe('States', () => {
-  const stateFile = '.lsp-dragonruby-relay-state';
+  const stateFile = '.dragonruby-lsp-relay/state';
 
   test("Enters state 'waitingForEditor' before first message", async () => {
     relayProcess = await startRelayProcess();
