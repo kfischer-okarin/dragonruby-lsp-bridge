@@ -180,18 +180,18 @@ test.describe('States', () => {
 
 test.describe('Logging requests', () => {
   test.afterEach(async () => {
-    await deleteFileIfNecessary('output.log');
+    await deleteFileIfNecessary('.dragonruby-lsp-relay/session.log');
   });
 
-  test('Logs requests to file when starting with --log flag', async () => {
-    relayProcess = await startRelayProcess('--log output.log');
+  test('Logs requests and state changes to session.log when starting with --log', async () => {
+    relayProcess = await startRelayProcess('--log');
     server = await startStubServer(9001, [
       { status: 200, body: '{"response": "ok"}' },
     ]);
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
     await waitUntilRelayProcessHasState('connectedToServer');
 
-    const logContent = await readFile('output.log');
+    const logContent = await readFile('.dragonruby-lsp-relay/session.log');
     const logLines = logContent.trim().split('\n');
 
     assert.strictEqual(logLines.length, 5);
