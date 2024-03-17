@@ -124,6 +124,24 @@ test.describe('LSP message relay', () => {
   });
 });
 
+test.describe('Git Ignored data folder', () => {
+  test('Creates .dragonruby-lsp-relay folder in current directory', async () => {
+    relayProcess = await startRelayProcess();
+
+    const dataFolderStats = await fsPromises.stat('.dragonruby-lsp-relay');
+
+    assert.ok(dataFolderStats.isDirectory(), '.dragonruby-lsp-relay is not a directory');
+  });
+
+  test('Directory has a .gitignore file ignoring everything', async () => {
+    relayProcess = await startRelayProcess();
+
+    const gitIgnoreContent = await readFile('.dragonruby-lsp-relay/.gitignore');
+
+    assert.strictEqual(gitIgnoreContent, '*');
+  });
+});
+
 test.describe('States', () => {
   test("Enters state 'waitingForEditor' before first message", async () => {
     relayProcess = await startRelayProcess();
@@ -191,23 +209,5 @@ test.describe('Logging requests', () => {
 
     const logFileExists = await fileExists('output.log');
     assert.strictEqual(logFileExists, false, 'Log file should not exist but does');
-  });
-});
-
-test.describe('Git Ignored data folder', () => {
-  test('Creates .dragonruby-lsp-relay folder in current directory', async () => {
-    relayProcess = await startRelayProcess();
-
-    const dataFolderStats = await fsPromises.stat('.dragonruby-lsp-relay');
-
-    assert.ok(dataFolderStats.isDirectory(), '.dragonruby-lsp-relay is not a directory');
-  });
-
-  test('Directory has a .gitignore file ignoring everything', async () => {
-    relayProcess = await startRelayProcess();
-
-    const gitIgnoreContent = await readFile('.dragonruby-lsp-relay/.gitignore');
-
-    assert.strictEqual(gitIgnoreContent, '*');
   });
 });
