@@ -1,4 +1,4 @@
-const { buildLspMessageRelay } = require('./lspMessageRelay');
+const { buildLspMessageRelay } = require('./lib/lspMessageRelay');
 
 const options = {};
 const args = process.argv.slice(2);
