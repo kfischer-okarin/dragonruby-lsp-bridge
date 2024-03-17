@@ -170,13 +170,17 @@ test.describe('Logging requests', () => {
       { status: 200, body: '{"response": "ok"}' },
     ]);
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
+    await waitUntilRelayProcessHasState('connectedToServer');
 
     const logContent = await readFile('output.log');
     const logLines = logContent.trim().split('\n');
 
-    assert.strictEqual(logLines.length, 2);
-    assert.match(logLines[0], /.+ request \{"method": "initialize"\}/);
-    assert.match(logLines[1], /.+ response \{"response": "ok"\}/);
+    assert.strictEqual(logLines.length, 5);
+    assert.match(logLines[0], /.+ state waitingForEditor/);
+    assert.match(logLines[1], /.+ state connectingToServer/);
+    assert.match(logLines[2], /.+ request \{"method": "initialize"\}/);
+    assert.match(logLines[3], /.+ response \{"response": "ok"\}/);
+    assert.match(logLines[4], /.+ state connectedToServer/);
   });
 
   test('Logs nothing when not starting with --log flag', async () => {

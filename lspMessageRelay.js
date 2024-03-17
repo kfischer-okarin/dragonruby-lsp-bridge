@@ -144,6 +144,9 @@ class LspMessageRelay {
 
   #writeStateToFile(state) {
     fs.writeFileSync(this.STATE_FILE_PATH, state);
+    if (this.#logFileName) {
+      this.#log(`state ${state}`);
+    }
   }
 
   #log(message) {
