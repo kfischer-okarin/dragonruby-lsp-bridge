@@ -143,22 +143,24 @@ test.describe('Git Ignored data folder', () => {
 });
 
 test.describe('States', () => {
+  const stateFile = '.lsp-dragonruby-relay-state';
+
   test("Enters state 'waitingForEditor' before first message", async () => {
     relayProcess = await startRelayProcess();
-    await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'waitingForEditor');
+    await waitUntilFileHasContent(stateFile, 'waitingForEditor');
   });
 
   test("Enters state 'connectingToServer' after initialize message", async () => {
     relayProcess = await startRelayProcess();
     await sendToRelayProcess(relayProcess, buildInitializeMessage());
-    await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'connectingToServer');
+    await waitUntilFileHasContent(stateFile, 'connectingToServer');
   });
 
   test("Enters state 'connectedToServer' after server responds to initialize message", async () => {
     relayProcess = await startRelayProcess();
     server = await startStubServer(9001, buildValidServerResponses(1));
     await sendToRelayProcess(relayProcess, buildInitializeMessage());
-    await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'connectedToServer');
+    await waitUntilFileHasContent(stateFile, 'connectedToServer');
   });
 
   test("Enters state 'reconnectingToServer' after server connection is lost", async () => {
@@ -167,13 +169,13 @@ test.describe('States', () => {
     await sendToRelayProcess(relayProcess, buildInitializeMessage());
     await closeServerIfNecessary(server);
     await sendToRelayProcess(relayProcess, buildRandomMessage());
-    await waitUntilFileHasContent('.lsp-dragonruby-relay-state', 'reconnectingToServer');
+    await waitUntilFileHasContent(stateFile, 'reconnectingToServer');
   });
 
   test('Removes state file after process ends', async () => {
     relayProcess = await startRelayProcess();
     await killProcessIfNecessary(relayProcess);
-    const stateFileExists = await fileExists('.lsp-dragonruby-relay-state');
+    const stateFileExists = await fileExists(stateFile);
     assert.strictEqual(stateFileExists, false, 'State file should not exist but does');
   });
 });
