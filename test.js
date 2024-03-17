@@ -202,4 +202,12 @@ test.describe('Git Ignored data folder', () => {
 
     assert.ok(dataFolderStats.isDirectory(), '.dragonruby-lsp-relay is not a directory');
   });
+
+  test('Directory has a .gitignore file ignoring everything', async () => {
+    relayProcess = await startRelayProcess();
+
+    const gitIgnoreContent = await readFile('.dragonruby-lsp-relay/.gitignore');
+
+    assert.strictEqual(gitIgnoreContent, '*');
+  });
 });
