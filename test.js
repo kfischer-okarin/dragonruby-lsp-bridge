@@ -8,7 +8,6 @@ const {
   buildValidServerResponses,
   closeServerIfNecessary,
   deleteFileIfNecessary,
-  ensureAllPromisesAreResolvedEveryTest,
   fileExists,
   isPortUsed,
   killProcessIfNecessary,
@@ -22,8 +21,6 @@ const {
   waitUntilRelayProcessHasState,
 } = require('./testHelpers.js');
 
-
-ensureAllPromisesAreResolvedEveryTest();
 
 let relayProcess;
 let server;
