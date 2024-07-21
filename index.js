@@ -3,7 +3,7 @@ const { prepareDataFolder } = require('./lib/dataFolder');
 const { buildLspMessageRelay } = require('./lib/lspMessageRelay');
 
 const main = async () => {
-  const options = parseOptions(process.argv);
+  const options = parseOptions();
 
   await prepareDataFolder();
 
