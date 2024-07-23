@@ -175,7 +175,7 @@ test.describe('Logging requests', () => {
   });
 
   test('Logs requests and state changes to session.log when starting with --log', async () => {
-    relayProcess = await startRelayProcess('--log');
+    relayProcess = await startRelayProcess('http://localhost:9001/dragon/lsp --log');
     server = await startStubServer([
       { status: 200, body: '{"response": "ok"}' },
     ]);

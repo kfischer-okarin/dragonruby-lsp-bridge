@@ -113,7 +113,7 @@ exports.closeServerIfNecessary = (server) => new Promise((resolve) => {
 });
 
 exports.startRelayProcess = (args) => new Promise((resolve) => {
-  const argsList = args ? args.split(' ') : [];
+  const argsList = args ? args.split(' ') : ['http://localhost:9001/dragon/lsp'];
   const relayProcess = fork('./index.js', argsList, { stdio: ['pipe', 'pipe', 'inherit', 'ipc'] });
   relayProcess.on('spawn', () => {
     resolve(relayProcess);
