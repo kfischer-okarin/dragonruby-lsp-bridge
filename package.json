@@ -1,24 +1,23 @@
 {
-  "name": "dragonruby-lsp-relay",
+  "name": "lsp-http-relay",
   "version": "1.0.0",
-  "description": "Forwards LSP requests to a local running DragonRuby instance",
+  "description": "Forwards LSP requests to a local HTTP endpoint",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-relay.git"
+    "url": "https://github.com/kfischer-okarin/lsp-http-relay.git"
   },
   "keywords": [
     "LSP",
-    "ruby",
-    "dragonruby"
+    "HTTP"
   ],
   "author": "Kevin Fischer",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kfischer-okarin/dragonruby-lsp-relay/issues"
+    "url": "https://github.com/kfischer-okarin/lsp-http-relay/issues"
   },
-  "homepage": "https://github.com/kfischer-okarin/dragonruby-lsp-relay"
+  "homepage": "https://github.com/kfischer-okarin/lsp-http-relay"
 }
