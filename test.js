@@ -43,7 +43,7 @@ test.afterEach(async () => {
 
 test.describe('LSP message relay', () => {
   test('Relays LSP requests to server and responses from server', async () => {
-    server = await startStubServer(9001, [
+    server = await startStubServer([
       { status: 200, body: '{"response": "ok"}' },
     ]);
     relayProcess = await startRelayProcess();
@@ -63,7 +63,7 @@ test.describe('LSP message relay', () => {
   });
 
   test('Shows no output when server replies with 204', async () => {
-    server = await startStubServer(9001, [
+    server = await startStubServer([
       ...buildValidServerResponses(1),
       { status: 204, body: '' },
     ]);
@@ -79,7 +79,7 @@ test.describe('LSP message relay', () => {
     relayProcess = await startRelayProcess();
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"messageNumber": 1}'));
 
-    server = await startStubServer(9001, buildValidServerResponses(1));
+    server = await startStubServer(buildValidServerResponses(1));
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"messageNumber": 2}'));
 
     assert.deepStrictEqual(server.receivedRequests, [
@@ -91,7 +91,7 @@ test.describe('LSP message relay', () => {
     relayProcess = await startRelayProcess();
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
 
-    server = await startStubServer(9001, [
+    server = await startStubServer([
       { status: 200, body: '{"result": {}}' },
     ]);
     await waitUntilReceivedRequestCount(server, 1);
@@ -103,13 +103,13 @@ test.describe('LSP message relay', () => {
 
   test('Sends same initialize message again when server restarts', async () => {
     relayProcess = await startRelayProcess();
-    server = await startStubServer(9001, buildValidServerResponses(1));
+    server = await startStubServer(buildValidServerResponses(1));
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
     await closeServerIfNecessary(server);
     await sendToRelayProcess(relayProcess, buildRandomMessage());
     await waitUntilRelayProcessHasState('reconnectingToServer');
 
-    server = await startStubServer(9001, buildValidServerResponses(1));
+    server = await startStubServer(buildValidServerResponses(1));
     await waitUntilReceivedRequestCount(server, 1);
 
     assert.deepStrictEqual(server.receivedRequests, [
@@ -155,14 +155,14 @@ test.describe('States', () => {
 
   test("Enters state 'connectedToServer' after server responds to initialize message", async () => {
     relayProcess = await startRelayProcess();
-    server = await startStubServer(9001, buildValidServerResponses(1));
+    server = await startStubServer(buildValidServerResponses(1));
     await sendToRelayProcess(relayProcess, buildInitializeMessage());
     await waitUntilFileHasContent(stateFile, 'connectedToServer');
   });
 
   test("Enters state 'reconnectingToServer' after server connection is lost", async () => {
     relayProcess = await startRelayProcess();
-    server = await startStubServer(9001, buildValidServerResponses(1));
+    server = await startStubServer(buildValidServerResponses(1));
     await sendToRelayProcess(relayProcess, buildInitializeMessage());
     await closeServerIfNecessary(server);
     await sendToRelayProcess(relayProcess, buildRandomMessage());
@@ -184,7 +184,7 @@ test.describe('Logging requests', () => {
 
   test('Logs requests and state changes to session.log when starting with --log', async () => {
     relayProcess = await startRelayProcess('--log');
-    server = await startStubServer(9001, [
+    server = await startStubServer([
       { status: 200, body: '{"response": "ok"}' },
     ]);
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
@@ -203,7 +203,7 @@ test.describe('Logging requests', () => {
 
   test('Logs nothing when not starting with --log flag', async () => {
     relayProcess = await startRelayProcess();
-    server = await startStubServer(9001, buildValidServerResponses(1));
+    server = await startStubServer(buildValidServerResponses(1));
     await sendToRelayProcess(relayProcess, buildInitializeMessage());
 
     const logFileExists = await fileExists('output.log');

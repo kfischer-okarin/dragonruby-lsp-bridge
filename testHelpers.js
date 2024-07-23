@@ -43,7 +43,7 @@ exports.deleteFileIfNecessary = async (path) => {
   }
 };
 
-exports.startStubServer = (port, responses) => new Promise((resolve) => {
+exports.startStubServer = (responses) => new Promise((resolve) => {
   const server = http.createServer();
 
   server.receivedRequests = [];
@@ -80,7 +80,7 @@ exports.startStubServer = (port, responses) => new Promise((resolve) => {
     resolve(server);
   });
 
-  server.listen(port, 'localhost');
+  server.listen(9001, 'localhost');
 });
 
 exports.closeServerIfNecessary = (server) => new Promise((resolve) => {
