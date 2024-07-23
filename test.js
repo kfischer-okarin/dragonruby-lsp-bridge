@@ -122,25 +122,25 @@ test.describe('LSP message relay', () => {
 });
 
 test.describe('Git Ignored data folder', () => {
-  test('Creates .dragonruby-lsp-relay folder in current directory', async () => {
+  test('Creates .lsp-http-relay folder in current directory', async () => {
     relayProcess = await startRelayProcess();
 
-    const dataFolderStats = await fsPromises.stat('.dragonruby-lsp-relay');
+    const dataFolderStats = await fsPromises.stat('.lsp-http-relay');
 
-    assert.ok(dataFolderStats.isDirectory(), '.dragonruby-lsp-relay is not a directory');
+    assert.ok(dataFolderStats.isDirectory(), '.lsp-http-relay is not a directory');
   });
 
   test('Directory has a .gitignore file ignoring everything', async () => {
     relayProcess = await startRelayProcess();
 
-    const gitIgnoreContent = await readFile('.dragonruby-lsp-relay/.gitignore');
+    const gitIgnoreContent = await readFile('.lsp-http-relay/.gitignore');
 
     assert.strictEqual(gitIgnoreContent, '*');
   });
 });
 
 test.describe('States', () => {
-  const stateFile = '.dragonruby-lsp-relay/state';
+  const stateFile = '.lsp-http-relay/state';
 
   test("Enters state 'waitingForEditor' before first message", async () => {
     relayProcess = await startRelayProcess();
@@ -179,7 +179,7 @@ test.describe('States', () => {
 
 test.describe('Logging requests', () => {
   test.afterEach(async () => {
-    await deleteFileIfNecessary('.dragonruby-lsp-relay/session.log');
+    await deleteFileIfNecessary('.lsp-http-relay/session.log');
   });
 
   test('Logs requests and state changes to session.log when starting with --log', async () => {
@@ -190,7 +190,7 @@ test.describe('Logging requests', () => {
     await sendToRelayProcess(relayProcess, buildLSPMessage('{"method": "initialize"}'));
     await waitUntilRelayProcessHasState('connectedToServer');
 
-    const logContent = await readFile('.dragonruby-lsp-relay/session.log');
+    const logContent = await readFile('.lsp-http-relay/session.log');
     const logLines = logContent.trim().split('\n');
 
     assert.strictEqual(logLines.length, 5);
