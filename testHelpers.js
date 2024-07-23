@@ -43,55 +43,7 @@ exports.deleteFileIfNecessary = async (path) => {
   }
 };
 
-exports.startStubServer = (responses) => new Promise((resolve) => {
-  const server = http.createServer();
-
-  server.receivedRequests = [];
-
-  const remainingResponses = [...responses];
-
-  server.on('request', (req, res) => {
-    const bodyChunks = [];
-
-    req.on('data', (chunk) => {
-      bodyChunks.push(chunk);
-    });
-
-    req.on('end', () => {
-      const body = Buffer.concat(bodyChunks).toString();
-      server.receivedRequests.push({
-        url: req.url,
-        method: req.method,
-        contentLength: parseInt(req.headers['content-length'], 10),
-        body,
-      });
-
-      const response = remainingResponses.shift();
-      res.statusCode = response.status;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(response.body);
-      if (remainingResponses.length === 0) {
-        server.close();
-      }
-    });
-  });
-
-  server.on('listening', () => {
-    resolve(server);
-  });
-
-  server.listen(9001, 'localhost');
-});
-
-exports.closeServerIfNecessary = (server) => new Promise((resolve) => {
-  if (!server.listening) {
-    resolve();
-    return;
-  }
-  server.close(resolve);
-});
-
-exports.isPortUsed = (port) => new Promise((resolve) => {
+const isPortUsed = (port) => new Promise((resolve) => {
   const request = http.request(
     `http://localhost:${port}`,
     { method: 'GET' },
@@ -103,6 +55,61 @@ exports.isPortUsed = (port) => new Promise((resolve) => {
     resolve(false);
   });
   request.end();
+});
+
+exports.startStubServer = async (responses) => {
+  const portIsUsed = await isPortUsed(9001);
+  if (portIsUsed) {
+    throw new Error('Port 9001 is already in use');
+  }
+
+  return new Promise((resolve) => {
+    const server = http.createServer();
+
+    server.receivedRequests = [];
+
+    const remainingResponses = [...responses];
+
+    server.on('request', (req, res) => {
+      const bodyChunks = [];
+
+      req.on('data', (chunk) => {
+        bodyChunks.push(chunk);
+      });
+
+      req.on('end', () => {
+        const body = Buffer.concat(bodyChunks).toString();
+        server.receivedRequests.push({
+          url: req.url,
+          method: req.method,
+          contentLength: parseInt(req.headers['content-length'], 10),
+          body,
+        });
+
+        const response = remainingResponses.shift();
+        res.statusCode = response.status;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(response.body);
+        if (remainingResponses.length === 0) {
+          server.close();
+        }
+      });
+    });
+
+    server.on('listening', () => {
+      resolve(server);
+    });
+
+    server.listen(9001, 'localhost');
+  });
+}
+
+exports.closeServerIfNecessary = (server) => new Promise((resolve) => {
+  if (!server.listening) {
+    resolve();
+    return;
+  }
+  server.close(resolve);
 });
 
 exports.startRelayProcess = (args) => new Promise((resolve) => {

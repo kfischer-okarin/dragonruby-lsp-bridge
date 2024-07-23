@@ -9,7 +9,6 @@ const {
   closeServerIfNecessary,
   deleteFileIfNecessary,
   fileExists,
-  isPortUsed,
   killProcessIfNecessary,
   readFile,
   sendToRelayProcess,
@@ -24,13 +23,6 @@ const {
 
 let relayProcess;
 let server;
-
-test.before(async () => {
-  const portIsUsed = await isPortUsed(9001);
-  if (portIsUsed) {
-    throw new Error('Port 9001 is already in use');
-  }
-});
 
 test.afterEach(async () => {
   if (relayProcess) {
