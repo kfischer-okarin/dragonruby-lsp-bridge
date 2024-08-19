@@ -1,7 +1,7 @@
 {
   "name": "lsp-http-relay",
   "version": "1.0.0",
-  "description": "Forwards LSP requests to a local HTTP endpoint",
+  "description": "Relays LSP messages between stdin/stdout and a HTTP endpoint",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
