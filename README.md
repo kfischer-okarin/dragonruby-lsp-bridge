@@ -1,6 +1,8 @@
 # LSP HTTP Relay
 
 [![Tests](https://github.com/kfischer-okarin/lsp-http-relay/actions/workflows/test.yml/badge.svg)](https://github.com/kfischer-okarin/lsp-http-relay/actions/workflows/test.yml)
+[![GitHub License](https://img.shields.io/github/license/kfischer-okarin/lsp-http-relay)](./LICENSE)
+
 
 Relays LSP messages between `stdin`/`stdout` and a HTTP endpoint.
 
